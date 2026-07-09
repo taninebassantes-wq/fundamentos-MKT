@@ -29,14 +29,9 @@ if (!simulator) {
       id="quiz-lobby" 
       class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-md"
     >
-      <script is:inline dangerouslySetInnerHTML={{ __html: `
-        window.activeSimulatorData = {
-          id: "${simulator.id}",
-          title: "${simulator.title}",
-          time: ${simulator.timeLimitMinutes},
-          questions: ${JSON.stringify(questions)}
-        };
-      ` }} />
+      <script type="application/json" id="questions-data" raw-id={simulator.id} raw-title={simulator.title} raw-time={simulator.timeLimitMinutes}>
+        {JSON.stringify(questions)}
+      </script>
       <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full">
@@ -452,12 +447,13 @@ if (!simulator) {
       mailBodyRecommendations = document.getElementById('mail-body-recommendations');
       mailBodyErrorsSection = document.getElementById('mail-body-errors-section');
       btnSendEmail = document.getElementById('btn-send-simulated-email');
-      if (window.activeSimulatorData) {
-        simulatorId = window.activeSimulatorData.id || '';
-        simulatorTitle = window.activeSimulatorData.title || '';
-        simulatorTimeMinutes = parseInt(window.activeSimulatorData.time || '40');
-        allQuestions = window.activeSimulatorData.questions || [];
-        console.log("Successfully loaded simulator questions directly from window global object:", allQuestions.length);
+      const jsonEl = document.getElementById('questions-data');
+      if (jsonEl) {
+        simulatorId = jsonEl.getAttribute('raw-id') || '';
+        simulatorTitle = jsonEl.getAttribute('raw-title') || '';
+        simulatorTimeMinutes = parseInt(jsonEl.getAttribute('raw-time') || '40');
+        allQuestions = JSON.parse(jsonEl.textContent || '[]');
+        console.log("Successfully loaded simulator questions from JSON script payload element:", allQuestions.length);
       }
 
       const stored = localStorage.getItem(SETTINGS_KEY);
