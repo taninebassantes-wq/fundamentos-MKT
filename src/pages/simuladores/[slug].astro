@@ -1127,9 +1127,13 @@ if (!simulator) {
     });
   }
 
-  // Run immediately and also on page load fallback
-  initConfig();
-  initEvents();
+  // Run immediately inside a safe try-catch wrapper, and also on page load fallback
+  try {
+    initConfig();
+    initEvents();
+  } catch (err) {
+    console.log("Safe ignore: DOM not ready yet for immediate binding. Initializing on DOMContentLoaded next.");
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
     initConfig();
