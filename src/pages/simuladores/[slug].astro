@@ -25,7 +25,14 @@ if (!simulator) {
   <main class="max-w-4xl mx-auto px-4 py-8 flex-grow">
     
     <!-- SECTION 1: START LOBBY / CREDENTIALS BACKUP -->
-    <div id="quiz-lobby" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-md">
+    <div 
+      id="quiz-lobby" 
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-md"
+      data-simulator-id={simulator.id}
+      data-simulator-title={simulator.title}
+      data-simulator-time={simulator.timeLimitMinutes}
+      data-questions={JSON.stringify(questions)}
+    >
       <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full">
@@ -312,7 +319,7 @@ if (!simulator) {
   <Toast />
 </Layout>
 
-<script define:vars={{ simulatorId: simulator.id, simulatorTitle: simulator.title, simulatorTimeMinutes: simulator.timeLimitMinutes, allQuestions: questions }}>
+<script is:inline>
   // Storage keys
   const SETTINGS_KEY = 'senderos_simulator_settings_v1';
   const ATTEMPTS_KEY = 'senderos_attempts_v1';
@@ -321,6 +328,13 @@ if (!simulator) {
   // State elements
   let activeQuestions = [];
   let userAnswers = {}; // questionIndex -> selectedOptionText
+  
+  // Read params from DOM wrapper (Astro server data transfer)
+  const lobbyEl = document.getElementById('quiz-lobby');
+  const simulatorId = lobbyEl?.getAttribute('data-simulator-id') || '';
+  const simulatorTitle = lobbyEl?.getAttribute('data-simulator-title') || '';
+  const simulatorTimeMinutes = parseInt(lobbyEl?.getAttribute('data-simulator-time') || '40');
+  const allQuestions = JSON.parse(lobbyEl?.getAttribute('data-questions') || '[]');
   let isAnswerChecked = {}; // questionIndex -> boolean (only for practice mode)
   let currentIndex = 0;
   let timerInterval = null;
