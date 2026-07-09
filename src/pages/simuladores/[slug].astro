@@ -318,7 +318,7 @@ if (!simulator) {
   <Toast />
 </Layout>
 
-<script is:inline>
+<script>
   // Storage keys
   const SETTINGS_KEY = 'senderos_simulator_settings_v1';
   const ATTEMPTS_KEY = 'senderos_attempts_v1';
@@ -1127,16 +1127,7 @@ if (!simulator) {
     });
   }
 
-  // Run immediately inside a safe try-catch wrapper, and also on page load fallback
-  try {
-    initConfig();
-    initEvents();
-  } catch (err) {
-    console.log("Safe ignore: DOM not ready yet for immediate binding. Initializing on DOMContentLoaded next.");
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    initConfig();
-    initEvents();
-  });
+  // Run on page load
+  initConfig();
+  initEvents();
 </script>
