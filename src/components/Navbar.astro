@@ -1,0 +1,113 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+// Read path to highlight active state
+const { pathname } = Astro.url;
+
+const activeClass = "text-teal-600 dark:text-teal-400 font-semibold border-b-2 border-teal-500 pb-1 transition-all";
+const inactiveClass = "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all pb-1 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700";
+
+const links = [
+  { href: '/guia-estudio', label: 'Guía de Estudio' },
+  { href: '/flashcards', label: 'Flashcards' },
+  { href: '/simuladores', label: 'Simuladores' },
+  { href: '/registro-notas', label: 'Registro de Notas' },
+  { href: '/conceptos', label: 'Glosario' },
+  { href: '/fuentes', label: 'Fuentes' }
+];
+---
+
+<header class="sticky top-0 z-40 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      
+      <!-- Brand Logo / Title -->
+      <a href="/" class="flex items-center space-x-2 flex-shrink-0">
+        <span class="text-lg sm:text-xl font-bold font-display bg-gradient-to-r from-teal-600 to-indigo-600 dark:from-teal-400 dark:to-indigo-400 bg-clip-text text-transparent">
+          Senderos del Conocimiento en Marketing
+        </span>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden lg:flex items-center space-x-6">
+        {links.map(link => {
+          const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+          return (
+            <a href={link.href} class={isActive ? activeClass : inactiveClass}>
+              {link.label}
+            </a>
+          );
+        })}
+      </nav>
+
+      <!-- Actions -->
+      <div class="flex items-center space-x-4">
+        <ThemeToggle />
+        
+        <!-- Mobile Menu Button -->
+        <button
+          id="mobile-menu-button"
+          type="button"
+          class="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 focus:outline-none cursor-pointer"
+          aria-label="Abrir menú"
+        >
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path id="menu-icon-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            <path id="menu-icon-close" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors duration-300">
+    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+      {links.map(link => {
+        const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+        return (
+          <a
+            href={link.href}
+            class={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+              isActive 
+                ? 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' 
+                : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+            }`}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</header>
+
+<script>
+  const setupMobileMenu = () => {
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+    const openIcon = document.getElementById('menu-icon-open');
+    const closeIcon = document.getElementById('menu-icon-close');
+
+    if (btn && menu && openIcon && closeIcon) {
+      // Remove any existing event listeners by cloning the button (handles transition events nicely)
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode?.replaceChild(newBtn, btn);
+
+      newBtn.addEventListener('click', () => {
+        const isHidden = menu.classList.toggle('hidden');
+        if (isHidden) {
+          openIcon.classList.remove('hidden');
+          closeIcon.classList.add('hidden');
+        } else {
+          openIcon.classList.add('hidden');
+          closeIcon.classList.remove('hidden');
+        }
+      });
+    }
+  };
+
+  setupMobileMenu();
+  document.addEventListener('astro:after-swap', setupMobileMenu);
+</script>

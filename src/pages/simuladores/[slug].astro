@@ -1,0 +1,1056 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Toast from '../../components/Toast.astro';
+import { simulators } from '../../data/simulators';
+import { questions } from '../../data/questions';
+
+export async function getStaticPaths() {
+  return simulators.map(sim => ({
+    params: { slug: sim.id.toLowerCase() }
+  }));
+}
+
+const { slug } = Astro.params;
+const simulator = simulators.find(s => s.id.toLowerCase() === slug?.toLowerCase());
+
+if (!simulator) {
+  return Astro.redirect('/simuladores');
+}
+---
+
+<Layout title={simulator.title} description={simulator.description}>
+  <Navbar />
+
+  <main class="max-w-4xl mx-auto px-4 py-8 flex-grow">
+    
+    <!-- SECTION 1: START LOBBY / CREDENTIALS BACKUP -->
+    <div id="quiz-lobby" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-md">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full">
+            {simulator.blockTarget}
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-2">
+            {simulator.title}
+          </h1>
+        </div>
+        <a href="/simuladores" class="text-sm font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+          ← Cambiar Simulador
+        </a>
+      </div>
+
+      <p class="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+        {simulator.description}
+      </p>
+
+      <!-- Configuration Warning / Form -->
+      <div id="lobby-credentials-form" class="space-y-4 p-5 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 mb-6">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+          <span>📝</span> Validar Datos Académicos
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nombre Completo</label>
+            <input type="text" id="lobby-name" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Paralelo / Curso</label>
+            <input type="text" id="lobby-group" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Docente de Enlace (Correo)</label>
+            <input type="email" id="lobby-email" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 bg-indigo-50/30 dark:bg-slate-950/20 p-4 rounded-2xl border border-indigo-100/50 dark:border-slate-800">
+        <div class="text-center">
+          <p class="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Preguntas Seleccionadas</p>
+          <p id="lobby-question-count" class="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">20</p>
+        </div>
+        <div class="text-center border-y sm:border-y-0 sm:border-x border-slate-200/60 dark:border-slate-800 py-2 sm:py-0">
+          <p class="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Modo Seleccionado</p>
+          <p id="lobby-mode" class="text-xl font-extrabold text-teal-600 dark:text-teal-400 mt-0.5">Práctica</p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Tiempo Límite</p>
+          <p id="lobby-time" class="text-xl font-extrabold text-amber-500 mt-0.5">{simulator.timeLimitMinutes} minutos</p>
+        </div>
+      </div>
+
+      <button
+        id="btn-start-quiz"
+        class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-2xl transition-all shadow-md hover:shadow-teal-500/20 text-center flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <span>🚀</span> Comenzar Simulación Académica
+      </button>
+    </div>
+
+    <!-- SECTION 2: ACTIVE QUIZ PLAYGROUND -->
+    <div id="quiz-playground" class="hidden space-y-6 animate-fade-in">
+      
+      <!-- Top Session Info HUD -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <p class="text-xs text-slate-400 font-bold uppercase">Evaluado en Curso</p>
+          <p class="text-sm font-bold text-slate-800 dark:text-slate-200" id="hud-student-info">Estudiante: -</p>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-right">
+            <span class="text-xs text-slate-400 block font-bold uppercase">Progreso</span>
+            <span id="hud-progress-counter" class="text-sm font-extrabold text-teal-600 dark:text-teal-400">1 / 20</span>
+          </div>
+          <div id="hud-timer-container" class="px-4 py-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/30 rounded-xl text-rose-600 dark:text-rose-400 font-mono font-bold flex items-center gap-1.5">
+            <span>⏱️</span> <span id="hud-timer">00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+        <div id="quiz-progress-bar" class="h-full bg-teal-500 transition-all duration-300" style="width: 5%"></div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        
+        <!-- Question Meta -->
+        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span id="question-meta-topic">Tema: -</span>
+          <span id="question-meta-difficulty" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full">básico</span>
+        </div>
+
+        <!-- Question Title -->
+        <h2 id="question-text" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug">
+          Cargando pregunta...
+        </h2>
+
+        <!-- Options Form -->
+        <div id="question-options" class="grid grid-cols-1 gap-3.5 pt-2">
+          <!-- Options injected here -->
+        </div>
+
+        <!-- Immediate Practice Feedback -->
+        <div id="practice-feedback" class="hidden p-4 rounded-2xl border transition-all duration-200">
+          <p id="feedback-title" class="font-bold text-sm mb-1">¡Correcto / Incorrecto!</p>
+          <p id="feedback-explanation" class="text-xs leading-relaxed text-slate-600 dark:text-slate-400"></p>
+          
+          <button 
+            id="btn-add-reinforcement"
+            class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            <span>🔥</span> Guardar como Tarjeta de Refuerzo
+          </button>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button
+            id="btn-prev-q"
+            class="px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-sm transition-all cursor-pointer"
+          >
+            ← Anterior
+          </button>
+          
+          <!-- Mid Button for practice confirmation -->
+          <button
+            id="btn-check-answer"
+            class="hidden px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all cursor-pointer"
+          >
+            Comprobar Respuesta
+          </button>
+
+          <button
+            id="btn-next-q"
+            class="px-4.5 py-2.5 bg-slate-950 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-white font-bold rounded-xl text-sm transition-all cursor-pointer"
+          >
+            Siguiente →
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Action Footer for early finalization -->
+      <div class="flex justify-end">
+        <button
+          id="btn-submit-early"
+          class="px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+        >
+          🚨 Finalizar Intento y Calificar
+        </button>
+      </div>
+
+    </div>
+
+    <!-- SECTION 3: RESULTS SCREEN -->
+    <div id="quiz-results" class="hidden space-y-8 animate-fade-in">
+      
+      <!-- Grading Dashboard -->
+      <div class="bg-gradient-to-br from-teal-600 to-indigo-700 text-white rounded-3xl p-6 sm:p-8 shadow-lg text-center relative overflow-hidden">
+        <div class="relative z-10">
+          <span class="text-xs uppercase font-extrabold tracking-widest bg-white/20 px-3 py-1 rounded-full">Resultado de la Simulación</span>
+          <h2 class="text-4xl sm:text-5xl font-black mt-4" id="results-score">0.00 / 10</h2>
+          
+          <div class="mt-4 max-w-sm mx-auto">
+            <p class="text-lg font-bold" id="results-level">Satisfactorio</p>
+            <p class="text-xs text-teal-100/90 mt-1" id="results-metadata">Estudiante: Juan • Paralelo: A • Modo: Práctica</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 max-w-md mx-auto mt-6 bg-black/10 rounded-2xl p-3 text-xs">
+            <div>
+              <p class="opacity-75">Correctas</p>
+              <p class="text-lg font-extrabold mt-0.5" id="results-correct">0</p>
+            </div>
+            <div class="border-x border-white/15">
+              <p class="opacity-75">Incorrectas</p>
+              <p class="text-lg font-extrabold mt-0.5" id="results-incorrect">0</p>
+            </div>
+            <div>
+              <p class="opacity-75">Tiempo</p>
+              <p class="text-lg font-extrabold mt-0.5" id="results-time">00:00</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-4 justify-center">
+        <button
+          id="btn-retry"
+          class="px-5 py-3 font-bold bg-slate-950 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-white rounded-xl shadow transition-all cursor-pointer"
+        >
+          🔄 Volver a Intentar
+        </button>
+        <a
+          href="/simuladores"
+          class="px-5 py-3 font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center"
+        >
+          🏠 Volver al Lobby
+        </a>
+      </div>
+
+      <!-- Simulated Email Submission Section -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span>📧</span>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Envío Simulado de Calificación al Docente</h3>
+        </div>
+        <p class="text-xs text-slate-500">
+          De acuerdo con los parámetros de la asignatura, puedes notificar formalmente esta nota a tu docente a través de la simulación de correo corporativo.
+        </p>
+
+        <!-- Simulated Email Interface -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-inner bg-slate-50 dark:bg-slate-950/40">
+          <!-- Email Header -->
+          <div class="bg-slate-100 dark:bg-slate-900/80 px-4 py-3 border-b border-slate-200 dark:border-slate-800/80 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <div><span class="font-bold">De:</span> campus-virtual@universidad.edu <span class="italic">(en nombre de <span id="mail-from-student">-</span>)</span></div>
+            <div><span class="font-bold">Para:</span> <span id="mail-to-teacher" class="text-indigo-600 dark:text-indigo-400 font-bold">-</span></div>
+            <div><span class="font-bold">Asunto:</span> <span class="text-slate-800 dark:text-white font-semibold">Reporte Académico Simulador - Fundamentos de Marketing</span></div>
+          </div>
+          <!-- Email Content Body -->
+          <div class="p-6 bg-white dark:bg-slate-900 font-sans text-sm text-slate-800 dark:text-slate-200 space-y-4 max-h-96 overflow-y-auto">
+            <p>Estimado/a Docente,</p>
+            <p>
+              Le informamos que el estudiante <strong id="mail-body-name">-</strong> ha finalizado un simulador de examen en el aula virtual de <strong>Fundamentos de Marketing</strong>. A continuación, se detallan las métricas académicas obtenidas:
+            </p>
+            
+            <table class="w-full border-collapse text-xs my-4">
+              <tbody>
+                <tr class="border-b border-slate-100 dark:border-slate-800"><td class="py-2 font-bold text-slate-500 uppercase w-1/3">Simulador:</td><td id="mail-body-sim-title" class="py-2 font-semibold">-</td></tr>
+                <tr class="border-b border-slate-100 dark:border-slate-800"><td class="py-2 font-bold text-slate-500 uppercase">Estudiante:</td><td id="mail-body-student-details" class="py-2">-</td></tr>
+                <tr class="border-b border-slate-100 dark:border-slate-800"><td class="py-2 font-bold text-slate-500 uppercase">Modo de prueba:</td><td id="mail-body-mode" class="py-2">-</td></tr>
+                <tr class="border-b border-slate-100 dark:border-slate-800"><td class="py-2 font-bold text-slate-500 uppercase">Calificación:</td><td class="py-2"><strong id="mail-body-score" class="text-teal-600 dark:text-teal-400 text-sm">-</strong></td></tr>
+                <tr class="border-b border-slate-100 dark:border-slate-800"><td class="py-2 font-bold text-slate-500 uppercase">Rendimiento:</td><td id="mail-body-level" class="py-2 font-semibold">-</td></tr>
+                <tr class="border-b border-slate-100 dark:border-slate-800"><td class="py-2 font-bold text-slate-500 uppercase">Fecha e intento:</td><td id="mail-body-date" class="py-2">-</td></tr>
+              </tbody>
+            </table>
+
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+              <p class="font-bold text-slate-700 dark:text-slate-300 mb-1">Diagnóstico & Recomendación:</p>
+              <p id="mail-body-recommendations" class="text-slate-600 dark:text-slate-400 leading-relaxed">-</p>
+            </div>
+
+            <div id="mail-body-errors-section" class="space-y-2 text-xs">
+              <!-- Injected dynamically if errors exist -->
+            </div>
+            
+            <p class="text-slate-400 text-xs italic pt-4 border-t border-slate-100 dark:border-slate-800">
+              * Nota: Este correo es una simulación visual de integración de resultados académicos del simulador de Fundamentos de Marketing.
+            </p>
+          </div>
+        </div>
+
+        <button
+          id="btn-send-simulated-email"
+          class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-md hover:shadow-indigo-500/20 text-center flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span>📨</span> Enviar Reporte Académico
+        </button>
+      </div>
+
+      <!-- Detailed Question Review (Errors and Successes) -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span>🔍</span> Revisión Detallada de Preguntas
+        </h3>
+        
+        <div id="detailed-review-list" class="space-y-6">
+          <!-- Injected detailed review cards -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 mt-12">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<script define:vars={{ simulatorId: simulator.id, simulatorTitle: simulator.title, simulatorTimeMinutes: simulator.timeLimitMinutes, allQuestions: questions }}>
+  // Storage keys
+  const SETTINGS_KEY = 'senderos_simulator_settings_v1';
+  const ATTEMPTS_KEY = 'senderos_attempts_v1';
+  const REINFORCEMENT_KEY = 'senderos_flashcards_refuerzo';
+
+  // State elements
+  let activeQuestions = [];
+  let userAnswers = {}; // questionIndex -> selectedOptionText
+  let isAnswerChecked = {}; // questionIndex -> boolean (only for practice mode)
+  let currentIndex = 0;
+  let timerInterval = null;
+  let timeRemaining = 0; // seconds
+  let timeSpent = 0; // seconds
+  let settings = { name: '', group: '', teacherEmail: '', mode: 'practice', questionCount: '20' };
+
+  // DOM elements - lobby
+  const quizLobby = document.getElementById('quiz-lobby');
+  const lobbyName = document.getElementById('lobby-name');
+  const lobbyGroup = document.getElementById('lobby-group');
+  const lobbyEmail = document.getElementById('lobby-email');
+  const lobbyCount = document.getElementById('lobby-question-count');
+  const lobbyMode = document.getElementById('lobby-mode');
+  const btnStartQuiz = document.getElementById('btn-start-quiz');
+
+  // DOM elements - playground
+  const quizPlayground = document.getElementById('quiz-playground');
+  const hudStudentInfo = document.getElementById('hud-student-info');
+  const hudProgressCounter = document.getElementById('hud-progress-counter');
+  const hudTimerContainer = document.getElementById('hud-timer-container');
+  const hudTimer = document.getElementById('hud-timer');
+  const progressBar = document.getElementById('quiz-progress-bar');
+  const qMetaTopic = document.getElementById('question-meta-topic');
+  const qMetaDifficulty = document.getElementById('question-meta-difficulty');
+  const qText = document.getElementById('question-text');
+  const qOptions = document.getElementById('question-options');
+  const practiceFeedback = document.getElementById('practice-feedback');
+  const feedbackTitle = document.getElementById('feedback-title');
+  const feedbackExplanation = document.getElementById('feedback-explanation');
+  const btnAddReinforcement = document.getElementById('btn-add-reinforcement');
+  const btnPrevQ = document.getElementById('btn-prev-q');
+  const btnNextQ = document.getElementById('btn-next-q');
+  const btnCheckAnswer = document.getElementById('btn-check-answer');
+  const btnSubmitEarly = document.getElementById('btn-submit-early');
+
+  // DOM elements - results
+  const quizResults = document.getElementById('quiz-results');
+  const resultsScore = document.getElementById('results-score');
+  const resultsLevel = document.getElementById('results-level');
+  const resultsMetadata = document.getElementById('results-metadata');
+  const resultsCorrect = document.getElementById('results-correct');
+  const resultsIncorrect = document.getElementById('results-incorrect');
+  const resultsTime = document.getElementById('results-time');
+  const btnRetry = document.getElementById('btn-retry');
+  const detailedReviewList = document.getElementById('detailed-review-list');
+
+  // DOM elements - simulated email
+  const mailFromStudent = document.getElementById('mail-from-student');
+  const mailToTeacher = document.getElementById('mail-to-teacher');
+  const mailBodyName = document.getElementById('mail-body-name');
+  const mailBodySimTitle = document.getElementById('mail-body-sim-title');
+  const mailBodyStudentDetails = document.getElementById('mail-body-student-details');
+  const mailBodyMode = document.getElementById('mail-body-mode');
+  const mailBodyScore = document.getElementById('mail-body-score');
+  const mailBodyLevel = document.getElementById('mail-body-level');
+  const mailBodyDate = document.getElementById('mail-body-date');
+  const mailBodyRecommendations = document.getElementById('mail-body-recommendations');
+  const mailBodyErrorsSection = document.getElementById('mail-body-errors-section');
+  const btnSendEmail = document.getElementById('btn-send-simulated-email');
+
+  // Initialize page configuration
+  function initConfig() {
+    try {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) {
+        settings = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Populate form in lobby
+    if (lobbyName) lobbyName.value = settings.name || '';
+    if (lobbyGroup) lobbyGroup.value = settings.group || '';
+    if (lobbyEmail) lobbyEmail.value = settings.teacherEmail || '';
+
+    if (lobbyCount) {
+      lobbyCount.textContent = settings.questionCount === 'all' ? 'Todas' : settings.questionCount;
+    }
+    if (lobbyMode) {
+      lobbyMode.textContent = settings.mode === 'practice' ? 'Práctica' : 'Evaluación';
+    }
+  }
+
+  // Pick questions using prioritizing unseen questions logic
+  function prepareQuestions() {
+    // 1. Filter questions belonging to this simulator
+    let pool = [];
+    if (simulatorId === 'SIM-06') {
+      // Examen Integrador draws from all questions
+      pool = [...allQuestions];
+    } else {
+      pool = allQuestions.filter(q => q.simulador === simulatorId);
+    }
+
+    if (pool.length === 0) {
+      console.warn("No questions found in this simulator pool.");
+      return;
+    }
+
+    // 2. Fetch answered questions from history
+    let attempts = [];
+    try {
+      const stored = localStorage.getItem(ATTEMPTS_KEY);
+      if (stored) attempts = JSON.parse(stored);
+    } catch(e) {}
+
+    const answeredIdsCount = {};
+    attempts.forEach(att => {
+      if (att.answers) {
+        att.answers.forEach(ans => {
+          answeredIdsCount[ans.questionId] = (answeredIdsCount[ans.questionId] || 0) + 1;
+        });
+      }
+    });
+
+    // 3. Partition pool into unseen (0 attempts) and seen (>= 1 attempts), sort seen by number of attempts ascending
+    const unseen = pool.filter(q => !answeredIdsCount[q.id]);
+    const seen = pool.filter(q => answeredIdsCount[q.id]);
+
+    // Sort seen questions so the least answered ones appear first
+    seen.sort((a, b) => (answeredIdsCount[a.id] || 0) - (answeredIdsCount[b.id] || 0));
+
+    // Shuffle unseen questions and seen questions within their cohorts to prevent repetitive sequences
+    unseen.sort(() => Math.random() - 0.5);
+    // Shuffle equal-weighted seen items roughly
+    seen.sort((a, b) => {
+      const countDiff = (answeredIdsCount[a.id] || 0) - (answeredIdsCount[b.id] || 0);
+      if (countDiff === 0) {
+        return Math.random() - 0.5;
+      }
+      return countDiff;
+    });
+
+    const orderedPool = [...unseen, ...seen];
+
+    // Determine target size
+    let targetSize = 20;
+    if (settings.questionCount === '10') targetSize = 10;
+    if (settings.questionCount === '20') targetSize = 20;
+    if (settings.questionCount === '30') targetSize = 30;
+    if (settings.questionCount === 'all') targetSize = orderedPool.length;
+
+    // Slice
+    const selected = orderedPool.slice(0, Math.min(targetSize, orderedPool.length));
+
+    // Prepare active questions by mixing option orders
+    activeQuestions = selected.map(q => {
+      const shuffledOptions = [...q.opciones];
+      shuffledOptions.sort(() => Math.random() - 0.5);
+      return {
+        ...q,
+        shuffledOptions
+      };
+    });
+  }
+
+  // Timer Management
+  function startTimer() {
+    timeSpent = 0;
+    if (settings.mode === 'evaluation') {
+      timeRemaining = simulatorTimeMinutes * 60;
+      if (hudTimerContainer) hudTimerContainer.classList.remove('hidden');
+    } else {
+      timeRemaining = 0; // count up
+      if (hudTimerContainer) hudTimerContainer.classList.add('hidden'); // Practice mode has no strict visual countdown timer
+    }
+
+    updateTimerDisplay();
+
+    timerInterval = setInterval(() => {
+      timeSpent++;
+      if (settings.mode === 'evaluation') {
+        timeRemaining--;
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          // @ts-ignore
+          window.showToast?.('¡Tiempo agotado! Evaluando respuestas automáticamente.', 'warning');
+          finishQuiz();
+        }
+      }
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    let displaySecs = 0;
+    let displayMins = 0;
+
+    if (settings.mode === 'evaluation') {
+      displayMins = Math.floor(timeRemaining / 60);
+      displaySecs = timeRemaining % 60;
+    } else {
+      displayMins = Math.floor(timeSpent / 60);
+      displaySecs = timeSpent % 60;
+    }
+
+    if (hudTimer) {
+      hudTimer.textContent = `${String(displayMins).padStart(2, '0')}:${String(displaySecs).padStart(2, '0')}`;
+    }
+  }
+
+  // Quiz Navigation & Render
+  function renderQuestion() {
+    if (activeQuestions.length === 0) return;
+
+    // Reset feedback panel
+    if (practiceFeedback) practiceFeedback.classList.add('hidden');
+
+    const q = activeQuestions[currentIndex];
+
+    // HUD progress
+    if (hudProgressCounter) {
+      hudProgressCounter.textContent = `${currentIndex + 1} de ${activeQuestions.length}`;
+    }
+    const percent = ((currentIndex + 1) / activeQuestions.length) * 100;
+    if (progressBar) {
+      progressBar.style.width = `${percent}%`;
+    }
+
+    // Metas
+    if (qMetaTopic) qMetaTopic.textContent = `Tema: ${q.tema}`;
+    if (qMetaDifficulty) {
+      qMetaDifficulty.textContent = q.dificultad;
+      // Color coded classes
+      qMetaDifficulty.className = "px-2.5 py-0.5 rounded-full font-bold uppercase text-[9px] " +
+        (q.dificultad === 'básico' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+         q.dificultad === 'intermedio' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' :
+         'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300');
+    }
+
+    if (qText) qText.textContent = q.pregunta;
+
+    // Render options
+    if (qOptions) {
+      qOptions.innerHTML = '';
+      q.shuffledOptions.forEach(opt => {
+        const optionId = `opt-${opt.slice(0, 10).replace(/[^a-z0-9]/gi, '_')}`;
+        const isSelected = userAnswers[currentIndex] === opt;
+
+        const container = document.createElement('label');
+        container.className = `flex items-start gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-900/60 select-none ` +
+          (isSelected ? 'border-teal-500 bg-teal-50/30 dark:bg-teal-950/20 shadow-sm' : 'border-slate-200 dark:border-slate-800');
+
+        container.innerHTML = `
+          <input type="radio" name="active-options" value="${opt}" ${isSelected ? 'checked' : ''} class="mt-1 text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700" />
+          <span class="text-sm text-slate-800 dark:text-slate-200 leading-snug font-medium">${opt}</span>
+        `;
+
+        // Click option handler
+        const radio = container.querySelector('input');
+        radio?.addEventListener('change', () => {
+          // If already checked in practice mode, prevent changes
+          if (settings.mode === 'practice' && isAnswerChecked[currentIndex]) {
+            radio.checked = userAnswers[currentIndex] === opt;
+            return;
+          }
+
+          userAnswers[currentIndex] = opt;
+          renderQuestion(); // Re-render to show selected background highlight
+        });
+
+        qOptions.appendChild(container);
+      });
+    }
+
+    // Configure Prev/Next buttons
+    if (btnPrevQ) btnPrevQ.disabled = currentIndex === 0;
+    
+    // In practice mode, show "Comprobar" button before showing Next if not checked
+    if (settings.mode === 'practice') {
+      const checked = isAnswerChecked[currentIndex];
+      if (checked) {
+        if (btnCheckAnswer) btnCheckAnswer.classList.add('hidden');
+        if (btnNextQ) btnNextQ.textContent = currentIndex === activeQuestions.length - 1 ? 'Calificar Intento' : 'Siguiente →';
+        showPracticeFeedback();
+      } else {
+        if (btnCheckAnswer) btnCheckAnswer.classList.remove('hidden');
+        if (btnNextQ) btnNextQ.textContent = 'Omitir / Siguiente →';
+      }
+    } else {
+      if (btnCheckAnswer) btnCheckAnswer.classList.add('hidden');
+      if (btnNextQ) btnNextQ.textContent = currentIndex === activeQuestions.length - 1 ? 'Finalizar e Ir a Resultados' : 'Siguiente →';
+    }
+  }
+
+  // Show practice mode feedback panel
+  function showPracticeFeedback() {
+    const q = activeQuestions[currentIndex];
+    const selected = userAnswers[currentIndex];
+    const isCorrect = selected === q.respuestaCorrecta;
+
+    if (!practiceFeedback) return;
+    practiceFeedback.classList.remove('hidden');
+
+    if (isCorrect) {
+      practiceFeedback.className = "p-4 rounded-2xl border border-emerald-200 bg-emerald-50/40 dark:border-emerald-950/40 dark:bg-emerald-950/10 text-emerald-800 dark:text-emerald-300";
+      if (feedbackTitle) feedbackTitle.innerHTML = "👍 ¡Respuesta Correcta!";
+    } else {
+      practiceFeedback.className = "p-4 rounded-2xl border border-rose-200 bg-rose-50/40 dark:border-rose-950/40 dark:bg-rose-950/10 text-rose-800 dark:text-rose-300";
+      if (feedbackTitle) feedbackTitle.innerHTML = `🚨 Respuesta Incorrecta (Correcta: "${q.respuestaCorrecta}")`;
+    }
+
+    if (feedbackExplanation) feedbackExplanation.textContent = q.explicacion;
+
+    // Show/hide add to reinforcement card based on answer status
+    if (btnAddReinforcement) {
+      if (isCorrect) {
+        btnAddReinforcement.classList.add('hidden');
+      } else {
+        btnAddReinforcement.classList.remove('hidden');
+      }
+    }
+  }
+
+  // Save current incorrect question as reinforcement card
+  function saveReinforcementCard() {
+    const q = activeQuestions[currentIndex];
+    if (!q) return;
+
+    try {
+      const stored = localStorage.getItem(REINFORCEMENT_KEY);
+      const cards = stored ? JSON.parse(stored) : [];
+
+      // Avoid duplicates
+      if (cards.some(c => c.id === q.id)) {
+        // @ts-ignore
+        window.showToast?.('Esta pregunta ya está guardada en tus tarjetas de refuerzo.', 'info');
+        return;
+      }
+
+      // Add as flashcard format
+      cards.push({
+        id: q.id,
+        block: simulatorId === 'SIM-06' ? 5 : parseInt(simulatorId.replace('SIM-0', '')),
+        category: q.tema,
+        question: q.pregunta,
+        answer: q.respuestaCorrecta,
+        hint: q.explicacion.slice(0, 150) + "..."
+      });
+
+      localStorage.setItem(REINFORCEMENT_KEY, JSON.stringify(cards));
+      // @ts-ignore
+      window.showToast?.('Pregunta guardada en Refuerzo de Flashcards.', 'success');
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Practice mode "Comprobar Respuesta" button
+  function checkPracticeAnswer() {
+    const selected = userAnswers[currentIndex];
+    if (!selected) {
+      // @ts-ignore
+      window.showToast?.('Por favor, selecciona una de las opciones para comprobar.', 'warning');
+      return;
+    }
+
+    isAnswerChecked[currentIndex] = true;
+    renderQuestion();
+  }
+
+  // Handle next questions
+  function handleNext() {
+    if (settings.mode === 'practice' && !isAnswerChecked[currentIndex] && userAnswers[currentIndex]) {
+      // Auto check if they clicked next instead of check
+      isAnswerChecked[currentIndex] = true;
+      renderQuestion();
+      return;
+    }
+
+    if (currentIndex < activeQuestions.length - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      // Calculate results
+      if (confirm('¿Estás seguro de que deseas finalizar este simulador?')) {
+        finishQuiz();
+      }
+    }
+  }
+
+  // Finish quiz execution
+  function finishQuiz() {
+    clearInterval(timerInterval);
+
+    // Calculate score
+    let correct = 0;
+    let incorrect = 0;
+    const answersReport = [];
+
+    activeQuestions.forEach((q, idx) => {
+      const selected = userAnswers[idx] || 'Sin responder';
+      const isCorr = selected === q.respuestaCorrecta;
+      if (isCorr) correct++; else incorrect++;
+
+      answersReport.push({
+        questionId: q.id,
+        questionText: q.pregunta,
+        selectedAnswer: selected,
+        correctAnswer: q.respuestaCorrecta,
+        isCorrect: isCorr,
+        explanation: q.explicacion,
+        tema: q.tema
+      });
+    });
+
+    const finalScoreRaw = (correct / activeQuestions.length) * 10;
+    const finalScore = Math.round(finalScoreRaw * 100) / 100; // round to 2 decimals
+    const passed = finalScore >= 7.0;
+
+    let performanceLevel = "Insatisfactorio (Requiere Refuerzo)";
+    if (finalScore >= 9.0) performanceLevel = "Excelente (Dominio Sobresaliente)";
+    else if (finalScore >= 8.0) performanceLevel = "Muy Bueno (Dominio Alto)";
+    else if (finalScore >= 7.0) performanceLevel = "Satisfactorio (Dominio Básico)";
+
+    // Save attempt to localStorage
+    const attemptId = `ATT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const attemptObj = {
+      id: attemptId,
+      studentName: settings.name,
+      studentGroup: settings.group,
+      teacherEmail: settings.teacherEmail,
+      simulatorId: simulatorId,
+      simulatorTitle: simulatorTitle,
+      mode: settings.mode,
+      questionCount: activeQuestions.length,
+      score: finalScore,
+      correctCount: correct,
+      totalQuestions: activeQuestions.length,
+      timeLimit: simulatorTimeMinutes,
+      timeSpent: timeSpent,
+      timestamp: new Date().toISOString(),
+      passed: passed,
+      answers: answersReport
+    };
+
+    try {
+      const stored = localStorage.getItem(ATTEMPTS_KEY);
+      const attempts = stored ? JSON.parse(stored) : [];
+      attempts.push(attemptObj);
+      localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Populate results UI
+    if (resultsScore) resultsScore.textContent = `${finalScore.toFixed(2)} / 10`;
+    if (resultsLevel) {
+      resultsLevel.textContent = performanceLevel;
+      // Change color text based on performance
+      resultsLevel.className = "text-lg font-bold " + (passed ? "text-emerald-300" : "text-rose-300");
+    }
+    if (resultsMetadata) {
+      resultsMetadata.textContent = `Estudiante: ${settings.name} • Paralelo: ${settings.group} • Modo: ${settings.mode === 'practice' ? 'Práctica' : 'Evaluación'}`;
+    }
+    if (resultsCorrect) resultsCorrect.textContent = String(correct);
+    if (resultsIncorrect) resultsIncorrect.textContent = String(incorrect);
+    
+    const minutes = Math.floor(timeSpent / 60);
+    const seconds = timeSpent % 60;
+    if (resultsTime) resultsTime.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    // Populate Detailed Review
+    renderDetailedReview(answersReport);
+
+    // Populate Email Template
+    populateEmailTemplate(attemptObj);
+
+    // Hide playground, show results
+    if (quizPlayground) quizPlayground.classList.add('hidden');
+    if (quizResults) {
+      quizResults.classList.remove('hidden');
+      quizResults.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  // Detailed Review cards injection
+  function renderDetailedReview(answers: any[]) {
+    if (!detailedReviewList) return;
+    detailedReviewList.innerHTML = '';
+
+    answers.forEach((ans, idx) => {
+      const card = document.createElement('div');
+      card.className = `p-5 rounded-2xl border transition-all ` +
+        (ans.isCorrect ? 'border-emerald-100 bg-emerald-50/10 dark:border-emerald-950/40 dark:bg-emerald-950/5' : 'border-rose-100 bg-rose-50/10 dark:border-rose-950/40 dark:bg-rose-950/5');
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between text-xs font-semibold mb-2 text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2">
+          <span>Pregunta ${idx + 1} (${ans.tema})</span>
+          <span class="px-2 py-0.5 rounded-full font-bold uppercase ${ans.isCorrect ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-400'}">
+            ${ans.isCorrect ? '✓ Correcta' : '✗ Incorrecta'}
+          </span>
+        </div>
+        <p class="text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug mb-3">${ans.questionText}</p>
+        
+        <div class="space-y-2 text-xs mb-3">
+          <div><span class="font-semibold text-slate-500">Tu respuesta:</span> <span class="${ans.isCorrect ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${ans.selectedAnswer}</span></div>
+          ${!ans.isCorrect ? `<div><span class="font-semibold text-slate-500">Respuesta correcta:</span> <span class="text-emerald-600 font-bold">${ans.correctAnswer}</span></div>` : ''}
+        </div>
+
+        <div class="bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 text-xs">
+          <p class="font-semibold text-slate-700 dark:text-slate-300 mb-1">Explicación académica:</p>
+          <p class="text-slate-600 dark:text-slate-400 leading-relaxed">${ans.explanation}</p>
+        </div>
+
+        ${!ans.isCorrect ? `
+          <button 
+            class="btn-save-err-card mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+            data-qid="${ans.questionId}"
+            data-qtext="${ans.questionText.replace(/"/g, '&quot;')}"
+            data-qcorrect="${ans.correctAnswer.replace(/"/g, '&quot;')}"
+            data-qexplanation="${ans.explanation.replace(/"/g, '&quot;')}"
+            data-qtema="${ans.tema.replace(/"/g, '&quot;')}"
+          >
+            <span>🔥</span> Crear Tarjeta de Refuerzo
+          </button>
+        ` : ''}
+      `;
+
+      // Event listener for the card's specific reinforcement button
+      const btnSave = card.querySelector('.btn-save-err-card');
+      if (btnSave) {
+        btnSave.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const qid = btnSave.getAttribute('data-qid');
+          const qtext = btnSave.getAttribute('data-qtext') || '';
+          const qcorrect = btnSave.getAttribute('data-qcorrect') || '';
+          const qexplanation = btnSave.getAttribute('data-qexplanation') || '';
+          const qtema = btnSave.getAttribute('data-qtema') || '';
+
+          try {
+            const stored = localStorage.getItem(REINFORCEMENT_KEY);
+            const cards = stored ? JSON.parse(stored) : [];
+
+            if (cards.some(c => c.id === qid)) {
+              // @ts-ignore
+              window.showToast?.('Esta tarjeta de refuerzo ya fue agregada.', 'info');
+              return;
+            }
+
+            cards.push({
+              id: qid,
+              block: simulatorId === 'SIM-06' ? 5 : parseInt(simulatorId.replace('SIM-0', '')),
+              category: qtema,
+              question: qtext,
+              answer: qcorrect,
+              hint: qexplanation.slice(0, 150) + "..."
+            });
+
+            localStorage.setItem(REINFORCEMENT_KEY, JSON.stringify(cards));
+            // @ts-ignore
+            window.showToast?.('Tarjeta de refuerzo guardada con éxito.', 'success');
+            btnSave.textContent = '🔥 Guardada';
+            // @ts-ignore
+            btnSave.disabled = true;
+          } catch(err) {
+            console.error(err);
+          }
+        });
+      }
+
+      detailedReviewList.appendChild(card);
+    });
+  }
+
+  // Populate Email Template Visual
+  function populateEmailTemplate(attempt: any) {
+    if (mailFromStudent) mailFromStudent.textContent = settings.name;
+    if (mailToTeacher) mailToTeacher.textContent = settings.teacherEmail;
+    if (mailBodyName) mailBodyName.textContent = settings.name;
+    if (mailBodySimTitle) mailBodySimTitle.textContent = attempt.simulatorTitle;
+    
+    if (mailBodyStudentDetails) {
+      mailBodyStudentDetails.textContent = `${settings.name} (Paralelo/Aula: ${settings.group})`;
+    }
+    if (mailBodyMode) {
+      mailBodyMode.textContent = settings.mode === 'practice' ? 'Práctica Académica' : 'Evaluación Calificada';
+    }
+    if (mailBodyScore) mailBodyScore.textContent = `${attempt.score.toFixed(2)} / 10`;
+
+    let level = "Insatisfactorio (Requiere Refuerzo Urgente)";
+    if (attempt.score >= 9.0) level = "Excelente (Dominio Sobresaliente)";
+    else if (attempt.score >= 8.0) level = "Muy Bueno (Dominio Alto)";
+    else if (attempt.score >= 7.0) level = "Satisfactorio (Dominio Básico)";
+    
+    if (mailBodyLevel) mailBodyLevel.textContent = level;
+    
+    if (mailBodyDate) {
+      mailBodyDate.textContent = `${new Date(attempt.timestamp).toLocaleString('es-ES')}`;
+    }
+
+    // Recommendation logic based on topics failed
+    const errors = attempt.answers.filter(a => !a.isCorrect);
+    let recommendText = "";
+
+    if (errors.length === 0) {
+      recommendText = "¡Felicidades! Has completado el simulador con un dominio perfecto del bloque temático. Se sugiere continuar con los siguientes temas avanzados.";
+    } else {
+      const uniqueFailedTopics = [...new Set(errors.map(e => e.tema))];
+      recommendText = `El estudiante presenta oportunidades de mejora en los temas: "${uniqueFailedTopics.join(', ')}". Se le recomienda revisar las Guías de Estudio correspondientes y el mazo de Flashcards en el portal Senderos del Conocimiento.`;
+    }
+    if (mailBodyRecommendations) mailBodyRecommendations.textContent = recommendText;
+
+    // Inject list of errors into email body
+    if (mailBodyErrorsSection) {
+      mailBodyErrorsSection.innerHTML = '';
+      if (errors.length > 0) {
+        const title = document.createElement('p');
+        title.className = 'font-bold text-rose-600 mt-3 mb-1';
+        title.textContent = 'Detalle de Errores a Repasar:';
+        mailBodyErrorsSection.appendChild(title);
+
+        const list = document.createElement('ol');
+        list.className = 'list-decimal list-inside space-y-1.5 text-slate-700 dark:text-slate-300';
+        errors.forEach(err => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>Pregunta:</strong> ${err.questionText} <br/> <span class="text-rose-500 font-semibold">Respuesta incorrecta:</span> ${err.selectedAnswer} | <span class="text-emerald-600 font-semibold">Respuesta correcta:</span> ${err.correctAnswer}`;
+          list.appendChild(li);
+        });
+        mailBodyErrorsSection.appendChild(list);
+      }
+    }
+  }
+
+  // Setup Event Listeners
+  function initEvents() {
+    // Start quiz
+    btnStartQuiz?.addEventListener('click', () => {
+      // Capture any edits inside lobby credentials form
+      const nameVal = lobbyName?.value.trim() || '';
+      const groupVal = lobbyGroup?.value.trim() || '';
+      const emailVal = lobbyEmail?.value.trim() || '';
+
+      if (!nameVal || !groupVal || !emailVal) {
+        // @ts-ignore
+        window.showToast?.('Por favor, ingresa todos tus datos académicos antes de continuar.', 'warning');
+        return;
+      }
+
+      // Update settings
+      settings.name = nameVal;
+      settings.group = groupVal;
+      settings.teacherEmail = emailVal;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+
+      // Prep questions
+      prepareQuestions();
+
+      if (activeQuestions.length === 0) {
+        // @ts-ignore
+        window.showToast?.('No se encontraron preguntas en este simulador.', 'danger');
+        return;
+      }
+
+      // Reset states
+      userAnswers = {};
+      isAnswerChecked = {};
+      currentIndex = 0;
+
+      // Update HUD student name
+      if (hudStudentInfo) {
+        hudStudentInfo.textContent = `Estudiante: ${settings.name} (${settings.group})`;
+      }
+
+      // Transition layouts
+      if (quizLobby) quizLobby.classList.add('hidden');
+      if (quizPlayground) quizPlayground.classList.remove('hidden');
+
+      startTimer();
+      renderQuestion();
+
+      // Warning when reloading during quiz in evaluation mode
+      window.onbeforeunload = function() {
+        if (settings.mode === 'evaluation') {
+          return '¿Estás seguro de que quieres abandonar la evaluación? Perderás tu progreso actual.';
+        }
+      };
+    });
+
+    // Prev Button
+    btnPrevQ?.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    });
+
+    // Next / Skip Button
+    btnNextQ?.addEventListener('click', handleNext);
+
+    // Practice check answer button
+    btnCheckAnswer?.addEventListener('click', checkPracticeAnswer);
+
+    // Save reinforcement card from practice mode
+    btnAddReinforcement?.addEventListener('click', saveReinforcementCard);
+
+    // Submit early button
+    btnSubmitEarly?.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que deseas calificar e interrumpir el simulador ahora?')) {
+        finishQuiz();
+      }
+    });
+
+    // Retry simulator button
+    btnRetry?.addEventListener('click', () => {
+      // Reset layout and reload page configuration
+      if (quizResults) quizResults.classList.add('hidden');
+      if (quizLobby) quizLobby.classList.remove('hidden');
+      window.onbeforeunload = null;
+    });
+
+    // Send Simulated Email
+    btnSendEmail?.addEventListener('click', () => {
+      btnSendEmail.disabled = true;
+      btnSendEmail.textContent = 'Enviando Reporte...';
+
+      setTimeout(() => {
+        // @ts-ignore
+        window.showToast?.(`📧 Reporte académico enviado correctamente a ${settings.teacherEmail}`, 'success');
+        btnSendEmail.textContent = 'Reporte Enviado ✓';
+        btnSendEmail.className = "w-full py-3 bg-emerald-600 text-white font-bold rounded-2xl text-center flex items-center justify-center gap-2";
+      }, 1200);
+    });
+  }
+
+  // Run on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    initConfig();
+    initEvents();
+  });
+</script>

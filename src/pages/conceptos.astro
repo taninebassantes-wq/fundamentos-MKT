@@ -1,0 +1,453 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Toast from '../components/Toast.astro';
+import { concepts } from '../data/concepts';
+import { topics } from '../data/topics';
+
+// Map topics by ID for easy lookup
+const topicMap = new Map(topics.map(t => [t.id, t]));
+
+// Academically weight the importance of each concept
+const getImportance = (id: string): 'Alta' | 'Media' | 'Básica' => {
+  const high = [
+    'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C09', 'C13', 'C14', 'C18', 
+    'C20', 'C24', 'C27', 'C28', 'C29', 'C30', 'C32', 'C34', 'C37', 'C39', 
+    'C40', 'C41', 'C45', 'C48', 'C52', 'C54', 'C57', 'C59', 'C60', 'C62', 
+    'C65', 'C67', 'C70', 'C72', 'C75', 'C77', 'C80'
+  ];
+  const basic = [
+    'C07', 'C08', 'C15', 'C21', 'C25', 'C35', 'C43', 'C47', 'C51', 'C55', 
+    'C61', 'C69', 'C73', 'C79'
+  ];
+  if (high.includes(id)) return 'Alta';
+  if (basic.includes(id)) return 'Básica';
+  return 'Media';
+};
+
+const conceptsWithImportance = concepts.map(c => ({
+  ...c,
+  importance: getImportance(c.id),
+  topicName: topicMap.get(c.topicId)?.title || `Tema ${c.topicId}`
+}));
+---
+
+<Layout title="Glosario de Conceptos" description="Glosario académico interactivo de Fundamentos de Marketing con buscador, filtros y exportación de favoritos.">
+  <Navbar />
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
+    
+    <!-- Page Header -->
+    <div class="mb-10 text-center lg:text-left flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-8">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+          Glosario de Conceptos Clave
+        </h1>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+          Explora y filtra {concepts.length} términos teóricos fundamentales y oficiales de la mercadotecnia con ejemplos aplicados al entorno real.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-3 justify-center lg:justify-end">
+        <button
+          id="btn-show-favorites"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
+        >
+          <span id="favorites-star-icon" class="text-amber-500">☆</span>
+          <span>Ver Favoritos</span>
+          <span id="favorites-count" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+        </button>
+
+        <button
+          id="btn-export-csv"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-teal-500/20"
+        >
+          <span>📥</span>
+          <span>Exportar Favoritos (CSV)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search and Filter Grid -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        
+        <!-- Search Keyword -->
+        <div class="md:col-span-6 relative">
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar por palabra clave</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">🔍</span>
+            <input
+              type="text"
+              id="search-input"
+              class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400"
+              placeholder="Ej. Segmentación, Demanda, PESTEL..."
+            />
+          </div>
+        </div>
+
+        <!-- Filter by Topic -->
+        <div class="md:col-span-3">
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Filtrar por Tema</label>
+          <select
+            id="filter-topic"
+            class="w-full py-2.5 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-slate-800 dark:text-slate-200"
+          >
+            <option value="all">Todos los temas ({topics.length})</option>
+            {topics.map(t => (
+              <option value={t.id}>{t.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Filter by Importance -->
+        <div class="md:col-span-3">
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Filtrar por Importancia</label>
+          <select
+            id="filter-importance"
+            class="w-full py-2.5 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-slate-800 dark:text-slate-200"
+          >
+            <option value="all">Todas las prioridades</option>
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Básica">Básica</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Active Filters Feedback & Counter -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 px-1">
+      <div id="results-indicator" class="text-sm text-slate-600 dark:text-slate-400 font-medium">
+        Mostrando <span id="visible-count" class="font-bold text-teal-600 dark:text-teal-400">0</span> de <span class="font-bold">{concepts.length}</span> conceptos.
+      </div>
+      <button 
+        id="btn-clear-filters" 
+        class="hidden text-xs font-bold text-teal-600 dark:text-teal-400 hover:text-teal-500 transition-colors"
+      >
+        Limpiar filtros y búsqueda
+      </button>
+    </div>
+
+    <!-- Concepts Grid -->
+    <div id="concepts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {conceptsWithImportance.map(concept => {
+        const importanceColors = {
+          Alta: 'bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50',
+          Media: 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50',
+          Básica: 'bg-slate-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300 border border-slate-100 dark:border-slate-800'
+        }[concept.importance];
+
+        return (
+          <div
+            class="concept-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+            data-id={concept.id}
+            data-name={concept.name.toLowerCase()}
+            data-definition={concept.definition.toLowerCase()}
+            data-topic-id={concept.topicId}
+            data-block={concept.block}
+            data-importance={concept.importance}
+            data-example={concept.example.toLowerCase()}
+          >
+            <!-- Card Header -->
+            <div>
+              <div class="flex justify-between items-start gap-4 mb-3">
+                <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  Bloque 0{concept.block} · {concept.id}
+                </span>
+                
+                <!-- Favorite Star Toggle -->
+                <button
+                  type="button"
+                  class="btn-fav-toggle text-slate-300 hover:text-amber-500 dark:text-slate-700 dark:hover:text-amber-400 text-lg transition-all focus:outline-none cursor-pointer"
+                  data-id={concept.id}
+                  title="Guardar en favoritos"
+                >
+                  ★
+                </button>
+              </div>
+
+              <!-- Title & Badges -->
+              <h3 class="text-lg font-extrabold text-slate-800 dark:text-white mb-2 leading-snug">
+                {concept.name}
+              </h3>
+              
+              <div class="flex flex-wrap gap-1.5 mb-4">
+                <span class={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${importanceColors}`}>
+                  {concept.importance}
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 truncate max-w-[200px]" title={concept.topicName}>
+                  {concept.topicName}
+                </span>
+              </div>
+
+              <!-- Definition -->
+              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                {concept.definition}
+              </p>
+            </div>
+
+            <!-- Example Callout -->
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <span class="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block mb-1">Ejemplo Práctico</span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 italic leading-normal">
+                "{concept.example}"
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm max-w-md mx-auto mt-6">
+      <span class="text-4xl block mb-3">🔍</span>
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Sin resultados</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 px-6">
+        No encontramos ningún concepto que coincida con tus filtros actuales o palabra de búsqueda. Intenta limpiando los filtros.
+      </p>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Elements
+    const searchInput = document.getElementById('search-input');
+    const filterTopic = document.getElementById('filter-topic');
+    const filterImportance = document.getElementById('filter-importance');
+    const visibleCount = document.getElementById('visible-count');
+    const clearFiltersBtn = document.getElementById('btn-clear-filters');
+    const emptyState = document.getElementById('empty-state');
+    
+    const showFavsBtn = document.getElementById('btn-show-favorites');
+    const favsStarIcon = document.getElementById('favorites-star-icon');
+    const favsCountBadge = document.getElementById('favorites-count');
+    const exportCsvBtn = document.getElementById('btn-export-csv');
+    
+    const conceptCards = document.querySelectorAll('.concept-card');
+
+    // State
+    const FAV_STORAGE_KEY = 'mkt_favorite_concepts';
+    let onlyShowFavorites = false;
+
+    const getFavorites = () => {
+      try {
+        return JSON.parse(localStorage.getItem(FAV_STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    };
+
+    const saveFavorites = (favs) => {
+      localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(favs));
+      updateFavoritesUI();
+    };
+
+    // Update Favorites Buttons/Stars UI
+    const updateFavoritesUI = () => {
+      const favs = getFavorites();
+      favsCountBadge.textContent = favs.length;
+
+      // Update Star Icon on individual cards
+      conceptCards.forEach(card => {
+        const id = card.getAttribute('data-id');
+        const starBtn = card.querySelector('.btn-fav-toggle');
+        
+        if (favs.includes(id)) {
+          starBtn.classList.remove('text-slate-300', 'dark:text-slate-700');
+          starBtn.classList.add('text-amber-500');
+          starBtn.title = "Quitar de favoritos";
+        } else {
+          starBtn.classList.add('text-slate-300', 'dark:text-slate-700');
+          starBtn.classList.remove('text-amber-500');
+          starBtn.title = "Guardar en favoritos";
+        }
+      });
+
+      // Update Show Favorites Button Styling
+      if (onlyShowFavorites) {
+        showFavsBtn.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-800', 'dark:bg-amber-950/20', 'dark:border-amber-900/50', 'dark:text-amber-400');
+        favsStarIcon.textContent = '★';
+      } else {
+        showFavsBtn.classList.remove('bg-amber-50', 'border-amber-200', 'text-amber-800', 'dark:bg-amber-950/20', 'dark:border-amber-900/50', 'dark:text-amber-400');
+        favsStarIcon.textContent = '☆';
+      }
+    };
+
+    // 2. Filter Handler
+    const runFiltering = () => {
+      const query = searchInput.value.toLowerCase().trim();
+      const selectedTopic = filterTopic.value;
+      const selectedImportance = filterImportance.value;
+      const favs = getFavorites();
+
+      let visible = 0;
+
+      conceptCards.forEach(card => {
+        const id = card.getAttribute('data-id');
+        const name = card.getAttribute('data-name');
+        const definition = card.getAttribute('data-definition');
+        const example = card.getAttribute('data-example');
+        const topicId = card.getAttribute('data-topic-id');
+        const importance = card.getAttribute('data-importance');
+
+        // Match Query
+        const matchesQuery = !query || 
+          name.includes(query) || 
+          definition.includes(query) || 
+          example.includes(query) ||
+          id.toLowerCase().includes(query);
+
+        // Match Topic
+        const matchesTopic = selectedTopic === 'all' || topicId === selectedTopic;
+
+        // Match Importance
+        const matchesImportance = selectedImportance === 'all' || importance === selectedImportance;
+
+        // Match Favorites
+        const matchesFavorites = !onlyShowFavorites || favs.includes(id);
+
+        if (matchesQuery && matchesTopic && matchesImportance && matchesFavorites) {
+          card.classList.remove('hidden');
+          visible++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      visibleCount.textContent = visible;
+
+      // Show/Hide Clear Filters Link
+      const hasActiveFilters = query || selectedTopic !== 'all' || selectedImportance !== 'all' || onlyShowFavorites;
+      if (hasActiveFilters) {
+        clearFiltersBtn.classList.remove('hidden');
+      } else {
+        clearFiltersBtn.classList.add('hidden');
+      }
+
+      // Empty State
+      if (visible === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+    };
+
+    // Reset Filters
+    const clearAllFilters = () => {
+      searchInput.value = '';
+      filterTopic.value = 'all';
+      filterImportance.value = 'all';
+      onlyShowFavorites = false;
+      updateFavoritesUI();
+      runFiltering();
+      if (window.showToast) window.showToast('Filtros restaurados correctamente.', 'info');
+    };
+
+    // Event Listeners
+    searchInput.addEventListener('input', runFiltering);
+    filterTopic.addEventListener('change', runFiltering);
+    filterImportance.addEventListener('change', runFiltering);
+    clearFiltersBtn.addEventListener('click', clearAllFilters);
+
+    // Star Toggle Action
+    conceptCards.forEach(card => {
+      const starBtn = card.querySelector('.btn-fav-toggle');
+      starBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = starBtn.getAttribute('data-id');
+        let favs = getFavorites();
+
+        if (favs.includes(id)) {
+          favs = favs.filter(favId => favId !== id);
+          saveFavorites(favs);
+          if (window.showToast) window.showToast('Eliminado de tus favoritos.', 'info');
+        } else {
+          favs.push(id);
+          saveFavorites(favs);
+          if (window.showToast) window.showToast('¡Guardado en tus favoritos!', 'success');
+        }
+        
+        runFiltering();
+      });
+    });
+
+    // Toggle Favorites List
+    showFavsBtn.addEventListener('click', () => {
+      onlyShowFavorites = !onlyShowFavorites;
+      updateFavoritesUI();
+      runFiltering();
+    });
+
+    // Export CSV of Favorites
+    exportCsvBtn.addEventListener('click', () => {
+      const favs = getFavorites();
+      if (favs.length === 0) {
+        if (window.showToast) window.showToast('No tienes ningún favorito para exportar.', 'warning');
+        return;
+      }
+
+      // Collect data of favorites
+      const filteredConcepts = [];
+      conceptCards.forEach(card => {
+        const id = card.getAttribute('data-id');
+        if (favs.includes(id)) {
+          // Find original card content details (not lowercase)
+          const name = card.querySelector('h3').textContent.trim();
+          const block = card.getAttribute('data-block');
+          const importance = card.getAttribute('data-importance');
+          const definition = card.querySelector('p').textContent.trim();
+          const example = card.querySelector('.italic').textContent.trim().replace(/^"|"$/g, '');
+          const topicName = card.querySelector('.truncate').title;
+
+          filteredConcepts.push({ id, name, block, importance, topicName, definition, example });
+        }
+      });
+
+      // CSV Generation (UTF-8 with BOM to display Spanish accents in Excel properly)
+      let csvContent = '\uFEFF';
+      csvContent += 'ID;Concepto;Importancia;Bloque;Tema;Definición;Ejemplo\n';
+
+      filteredConcepts.forEach(c => {
+        const row = [
+          c.id,
+          c.name,
+          c.importance,
+          `Bloque ${c.block}`,
+          c.topicName,
+          c.definition,
+          c.example
+        ].map(text => `"${text.replace(/"/g, '""')}"`).join(';');
+        
+        csvContent += row + '\n';
+      });
+
+      // Create download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `conceptos_favoritos_mkt_${new Date().toISOString().slice(0,10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      if (window.showToast) window.showToast(`Se exportaron ${favs.length} favoritos a CSV.`, 'success');
+    });
+
+    // Init
+    updateFavoritesUI();
+    runFiltering();
+  });
+</script>

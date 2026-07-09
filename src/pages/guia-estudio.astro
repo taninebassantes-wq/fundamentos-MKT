@@ -1,0 +1,465 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Toast from '../components/Toast.astro';
+import { studyGuide } from '../data/studyGuide';
+
+const blockImportance: Record<string, { level: 'Alta' | 'Media' | 'Básica'; color: string }> = {
+  B01: { level: 'Alta', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50' },
+  B02: { level: 'Alta', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50' },
+  B03: { level: 'Alta', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50' },
+  B04: { level: 'Media', color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50' },
+  B05: { level: 'Alta', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50' }
+};
+---
+
+<Layout title="Guía de Estudio" description="Explora los 5 bloques de estudio de Fundamentos de Marketing con explicaciones, ejemplos, errores comunes e interactividad.">
+  <Navbar />
+  
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
+    
+    <!-- Page Header -->
+    <div class="mb-10 text-center lg:text-left flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-8">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+          Guía de Estudio Oficial
+        </h1>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+          Navega a través de los cinco bloques fundamentales estructurados académicamente para dominar los conceptos clave de la mercadotecnia.
+        </p>
+      </div>
+      
+      <!-- Progress Widget -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm min-w-[280px]">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tu Progreso de Estudio</span>
+          <span id="progress-percent" class="text-sm font-bold text-teal-600 dark:text-teal-400">0%</span>
+        </div>
+        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden mb-2">
+          <div id="progress-bar" class="bg-gradient-to-r from-teal-500 to-indigo-500 h-2.5 rounded-full transition-all duration-500 w-0"></div>
+        </div>
+        <p id="progress-text" class="text-xs text-slate-500 dark:text-slate-400">
+          0 de 5 bloques completados. ¡Comienza hoy!
+        </p>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- Sidebar / Tab Navigation -->
+      <div class="lg:col-span-1 space-y-2">
+        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block px-3 mb-3">Bloques de Contenido</span>
+        <div class="flex lg:flex-col overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 gap-2 no-scrollbar" role="tablist">
+          {studyGuide.map((block, index) => {
+            const isFirst = index === 0;
+            const importanceInfo = blockImportance[block.id] || { level: 'Básica', color: '' };
+            return (
+              <button
+                role="tab"
+                id={`tab-${block.id}`}
+                aria-controls={`panel-${block.id}`}
+                aria-selected={isFirst ? "true" : "false"}
+                data-block-id={block.id}
+                class={`tab-btn flex-shrink-0 text-left w-64 lg:w-full px-4 py-3.5 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col gap-1.5 ${
+                  isFirst
+                    ? 'bg-teal-50/80 border-teal-200 dark:bg-teal-950/20 dark:border-teal-800/80 text-teal-900 dark:text-teal-300 ring-2 ring-teal-500/20'
+                    : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <div class="flex items-center justify-between w-full">
+                  <span class="font-bold text-xs text-slate-500 dark:text-slate-400">BLOQUE 0{block.blockNumber}</span>
+                  <span class={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${importanceInfo.color}`}>
+                    {importanceInfo.level}
+                  </span>
+                </div>
+                <span class="font-semibold text-sm line-clamp-1 group-hover:text-teal-600">
+                  {block.title.replace(/Bloque \d+: /, '')}
+                </span>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="studied-status-indicator w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 transition-colors"></span>
+                  <span class="studied-status-text text-[11px] text-slate-500 dark:text-slate-400">Sin estudiar</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Detail Panels -->
+      <div class="lg:col-span-3">
+        {studyGuide.map((block, index) => {
+          const isFirst = index === 0;
+          const importanceInfo = blockImportance[block.id] || { level: 'Básica', color: '' };
+          return (
+            <div
+              role="tabpanel"
+              id={`panel-${block.id}`}
+              aria-labelledby={`tab-${block.id}`}
+              class={`block-panel transition-all duration-300 ${isFirst ? 'block' : 'hidden'}`}
+            >
+              
+              <!-- Block Card Header -->
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm mb-6">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                  <div>
+                    <span class="text-teal-600 dark:text-teal-400 font-bold text-xs uppercase tracking-widest block mb-1">
+                      Unidad Académica {block.blockNumber}
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold font-display text-slate-900 dark:text-white">
+                      {block.title}
+                    </h2>
+                  </div>
+                  
+                  <!-- Study Switch -->
+                  <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 self-start">
+                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        class="sr-only peer toggle-studied-btn" 
+                        data-block-id={block.id}
+                      />
+                      <div class="w-11 h-6 bg-slate-300 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-teal-500"></div>
+                      <span class="ms-3 text-xs font-bold text-slate-600 dark:text-slate-300">Marcar como estudiado</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Importance & Relevance Description -->
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-100 dark:border-slate-900 text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="text-indigo-500 text-base">⭐</span>
+                    <strong class="font-bold text-slate-800 dark:text-slate-200 text-xs uppercase tracking-wider">¿Por qué es importante este bloque?</strong>
+                    <span class={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ml-auto ${importanceInfo.color}`}>
+                      Importancia {importanceInfo.level}
+                    </span>
+                  </div>
+                  {block.importance}
+                </div>
+
+                <!-- Explicación -->
+                <div class="prose prose-slate dark:prose-invert max-w-none">
+                  <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                    <span class="text-teal-500">📖</span> Explicación Teórica
+                  </h3>
+                  <div class="text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 text-sm whitespace-pre-line">
+                    {block.explanation}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Content Cards Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                
+                <!-- Conceptos Clave -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm md:col-span-2">
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+                    <span class="text-indigo-500">🔑</span> Conceptos Clave
+                  </h3>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {block.keyConcepts.map(kc => (
+                      <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
+                        <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1.5 flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                          {kc.concept}
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {kc.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <!-- Ejemplo Aplicado -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                  <h3 class="text-base font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2 mb-3">
+                    <span class="text-emerald-500">💡</span> Caso de Estudio / Ejemplo
+                  </h3>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-emerald-50/30 dark:bg-emerald-950/10 p-4 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20 italic">
+                    "{block.example}"
+                  </p>
+                </div>
+
+                <!-- Error Frecuente -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                  <h3 class="text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2 mb-3">
+                    <span class="text-rose-500">⚠️</span> Error Común de Examen
+                  </h3>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-rose-50/30 dark:bg-rose-950/10 p-4 rounded-xl border border-rose-100/50 dark:border-rose-900/20">
+                    {block.commonError}
+                  </p>
+                </div>
+
+                <!-- Pregunta de Reflexión -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                  <h3 class="text-base font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2 mb-3">
+                    <span class="text-indigo-500">❓</span> Pregunta de Autoevaluación
+                  </h3>
+                  <div class="bg-indigo-50/30 dark:bg-indigo-950/10 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/20">
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-semibold mb-3">
+                      {block.reflection}
+                    </p>
+                    <details class="group">
+                      <summary class="text-xs font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer list-none flex items-center gap-1 hover:text-indigo-500 transition-colors">
+                        <span>Ver respuesta sugerida / Guía de análisis</span>
+                        <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                      </summary>
+                      <p class="mt-3 text-xs text-slate-600 dark:text-slate-400 border-t border-indigo-100/50 dark:border-indigo-900/30 pt-3 leading-relaxed">
+                        Para responder esta pregunta, considera los factores del entorno digital, las expectativas de gratificación inmediata del consumidor moderno y cómo las propuestas éticas de valor generan confianza de marca a largo plazo en lugar de transacciones frías.
+                      </p>
+                    </details>
+                  </div>
+                </div>
+
+                <!-- Resumen Ejecutivo -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                  <h3 class="text-base font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2 mb-3">
+                    <span class="text-amber-500">✨</span> Mini Resumen Ejecutivo
+                  </h3>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-amber-50/30 dark:bg-amber-950/10 p-4 rounded-xl border border-amber-100/50 dark:border-amber-900/20">
+                    {block.summary}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Notes Section -->
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-teal-500">📝</span> Mis Notas y Apuntes Personales
+                  </h3>
+                  <span class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded font-medium">Autoguardado</span>
+                </div>
+                <textarea
+                  id={`notes-${block.id}`}
+                  data-block-id={block.id}
+                  rows="4"
+                  class="w-full text-sm p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none resize-y text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                  placeholder="Escribe tus reflexiones, resúmenes del bloque o preguntas para repasar después..."
+                ></textarea>
+                <div class="flex justify-between items-center mt-3">
+                  <span id={`saved-indicator-${block.id}`} class="text-xs text-teal-600 dark:text-teal-400 opacity-0 transition-opacity font-medium">
+                    ✓ Cambios guardados en el dispositivo
+                  </span>
+                  <button
+                    type="button"
+                    class="save-notes-btn px-4 py-2 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors cursor-pointer"
+                    data-block-id={block.id}
+                  >
+                    Guardar Apuntes
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Tab Navigation System
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.block-panel');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const blockId = tab.getAttribute('data-block-id');
+
+        // Update tabs active styles
+        tabs.forEach(t => {
+          const isActive = t === tab;
+          t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          if (isActive) {
+            t.classList.remove('bg-white', 'border-slate-200', 'dark:bg-slate-900', 'dark:border-slate-800', 'text-slate-700', 'dark:text-slate-300', 'hover:bg-slate-100', 'dark:hover:bg-slate-800/50');
+            t.classList.add('bg-teal-50/80', 'border-teal-200', 'dark:bg-teal-950/20', 'dark:border-teal-800/80', 'text-teal-900', 'dark:text-teal-300', 'ring-2', 'ring-teal-500/20');
+          } else {
+            t.classList.remove('bg-teal-50/80', 'border-teal-200', 'dark:bg-teal-950/20', 'dark:border-teal-800/80', 'text-teal-900', 'dark:text-teal-300', 'ring-2', 'ring-teal-500/20');
+            t.classList.add('bg-white', 'border-slate-200', 'dark:bg-slate-900', 'dark:border-slate-800', 'text-slate-700', 'dark:text-slate-300', 'hover:bg-slate-100', 'dark:hover:bg-slate-800/50');
+          }
+        });
+
+        // Toggle panel visibility
+        panels.forEach(panel => {
+          if (panel.id === `panel-${blockId}`) {
+            panel.classList.remove('hidden');
+            panel.classList.add('block');
+          } else {
+            panel.classList.remove('block');
+            panel.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // 2. LocalStorage Persistence & Progress Calculations
+    const STORAGE_STUDIED_KEY = 'mkt_study_guide_studied';
+    const STORAGE_NOTES_KEY = 'mkt_study_guide_notes';
+
+    const getStudiedState = () => {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_STUDIED_KEY)) || {};
+      } catch {
+        return {};
+      }
+    };
+
+    const getNotesState = () => {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_NOTES_KEY)) || {};
+      } catch {
+        return {};
+      }
+    };
+
+    const updateProgressUI = () => {
+      const studied = getStudiedState();
+      const totalBlocks = 5;
+      let count = 0;
+      
+      const blocksList = ['B01', 'B02', 'B03', 'B04', 'B05'];
+      blocksList.forEach(id => {
+        if (studied[id]) count++;
+        
+        // Update checkbox toggles
+        const checkbox = document.querySelector(`.toggle-studied-btn[data-block-id="${id}"]`);
+        if (checkbox) {
+          checkbox.checked = !!studied[id];
+        }
+
+        // Update sidebar list indicator dot and label
+        const sidebarTab = document.querySelector(`.tab-btn[data-block-id="${id}"]`);
+        if (sidebarTab) {
+          const dot = sidebarTab.querySelector('.studied-status-indicator');
+          const txt = sidebarTab.querySelector('.studied-status-text');
+          if (studied[id]) {
+            dot.classList.remove('bg-slate-300', 'dark:bg-slate-700');
+            dot.classList.add('bg-emerald-500');
+            txt.textContent = 'Estudiado';
+            txt.classList.remove('text-slate-500', 'dark:text-slate-400');
+            txt.classList.add('text-emerald-600', 'dark:text-emerald-400', 'font-bold');
+          } else {
+            dot.classList.add('bg-slate-300', 'dark:bg-slate-700');
+            dot.classList.remove('bg-emerald-500');
+            txt.textContent = 'Sin estudiar';
+            txt.classList.add('text-slate-500', 'dark:text-slate-400');
+            txt.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'font-bold');
+          }
+        }
+      });
+
+      const percentage = Math.round((count / totalBlocks) * 100);
+      
+      const progressBar = document.getElementById('progress-bar');
+      const progressPercent = document.getElementById('progress-percent');
+      const progressText = document.getElementById('progress-text');
+      
+      if (progressBar) progressBar.style.width = `${percentage}%`;
+      if (progressPercent) progressPercent.textContent = `${percentage}%`;
+      if (progressText) {
+        progressText.textContent = `${count} de ${totalBlocks} bloques completados. ${
+          percentage === 100 ? '¡Excelente trabajo! Has completado la guía.' : 'Sigue así.'
+        }`;
+      }
+    };
+
+    // Initialize State
+    const initLocalStorageState = () => {
+      // Load studied checks
+      updateProgressUI();
+
+      // Load Notes
+      const notes = getNotesState();
+      Object.keys(notes).forEach(blockId => {
+        const textarea = document.getElementById(`notes-${blockId}`);
+        if (textarea) {
+          textarea.value = notes[blockId] || '';
+        }
+      });
+    };
+
+    // Toggle Studied Action
+    document.querySelectorAll('.toggle-studied-btn').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const blockId = e.target.getAttribute('data-block-id');
+        const studied = getStudiedState();
+        studied[blockId] = e.target.checked;
+        localStorage.setItem(STORAGE_STUDIED_KEY, JSON.stringify(studied));
+        
+        updateProgressUI();
+
+        if (e.target.checked) {
+          if (window.showToast) window.showToast(`¡Bloque ${blockId} marcado como completado!`, 'success');
+        } else {
+          if (window.showToast) window.showToast(`Bloque ${blockId} marcado como pendiente.`, 'info');
+        }
+      });
+    });
+
+    // Save Notes Action (Manual & Auto-Debounce)
+    const saveNotes = (blockId, value) => {
+      const notes = getNotesState();
+      notes[blockId] = value;
+      localStorage.setItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
+
+      const indicator = document.getElementById(`saved-indicator-${blockId}`);
+      if (indicator) {
+        indicator.classList.remove('opacity-0');
+        indicator.classList.add('opacity-100');
+        setTimeout(() => {
+          indicator.classList.remove('opacity-100');
+          indicator.classList.add('opacity-0');
+        }, 2000);
+      }
+    };
+
+    document.querySelectorAll('.save-notes-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const blockId = btn.getAttribute('data-block-id');
+        const textarea = document.getElementById(`notes-${blockId}`);
+        if (textarea) {
+          saveNotes(blockId, textarea.value);
+          if (window.showToast) window.showToast('Apuntes guardados con éxito.', 'success');
+        }
+      });
+    });
+
+    // Debounce autosave on typing
+    const debounceTimers = {};
+    document.querySelectorAll('textarea[id^="notes-"]').forEach(textarea => {
+      textarea.addEventListener('input', () => {
+        const blockId = textarea.getAttribute('data-block-id');
+        clearTimeout(debounceTimers[blockId]);
+        debounceTimers[blockId] = setTimeout(() => {
+          saveNotes(blockId, textarea.value);
+        }, 1000);
+      });
+    });
+
+    // Run setup
+    initLocalStorageState();
+  });
+</script>
+
+<style>
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+</style>

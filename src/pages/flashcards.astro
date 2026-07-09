@@ -1,0 +1,827 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Toast from '../components/Toast.astro';
+import { flashcards } from '../data/flashcards';
+
+// Categorías únicas para filtro
+const categories = [...new Set(flashcards.map(fc => fc.category))].sort();
+---
+
+<Layout title="Flashcards Interactivas" description="Domina los conceptos clave de mercadotecnia con nuestro sistema interactivo de flashcards. Filtra por bloque, nivel de dominio y dificultad.">
+  <Navbar />
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+    <!-- Page Header -->
+    <div class="mb-8 text-center lg:text-left flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+          Tarjetas de Aprendizaje (Flashcards)
+        </h1>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+          Pon a prueba tu memoria activa y retención de conceptos. Organiza tu estudio según tus áreas de refuerzo y niveles de dominio.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-3 justify-center lg:justify-end">
+        <button
+          id="btn-export-csv"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-teal-500/20"
+        >
+          <span>📥</span>
+          <span>Exportar Progreso (CSV)</span>
+        </button>
+        <button
+          id="btn-reset-progress"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-bold bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/30 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all cursor-pointer"
+        >
+          <span>🔄</span>
+          <span>Reiniciar Progreso</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Tab Selector -->
+    <div class="flex border-b border-slate-200 dark:border-slate-800 mb-8 gap-2">
+      <button
+        id="tab-standard"
+        class="tab-btn px-5 py-3 font-semibold text-sm border-b-2 border-teal-500 text-teal-600 dark:text-teal-400 focus:outline-none flex items-center gap-2"
+        data-tab="standard"
+      >
+        <span>🎴</span> Tarjetas de Estudio ({flashcards.length})
+      </button>
+      <button
+        id="tab-reinforcement"
+        class="tab-btn px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 focus:outline-none flex items-center gap-2"
+        data-tab="reinforcement"
+      >
+        <span>🔥</span> Refuerzo de Simuladores <span id="reinforcement-badge" class="bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Side Column: Filters and Progress -->
+      <aside class="lg:col-span-4 space-y-6">
+        <!-- Progress Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <span>📈</span> Progreso de Aprendizaje
+          </h3>
+          
+          <!-- Visual Stacked Bar -->
+          <div class="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex mb-4">
+            <div id="bar-know" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+            <div id="bar-review" class="h-full bg-amber-500 transition-all duration-500" style="width: 0%"></div>
+            <div id="bar-hard" class="h-full bg-rose-500 transition-all duration-500" style="width: 0%"></div>
+          </div>
+
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Lo sé bien
+              </span>
+              <span id="count-know" class="font-bold text-slate-800 dark:text-white">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <span class="w-3 h-3 rounded-full bg-amber-500"></span> Por repasar
+              </span>
+              <span id="count-review" class="font-bold text-slate-800 dark:text-white">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <span class="w-3 h-3 rounded-full bg-rose-500"></span> Difícil
+              </span>
+              <span id="count-hard" class="font-bold text-slate-800 dark:text-white">0</span>
+            </div>
+            <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-3">
+              <span class="text-slate-500">Sin estudiar</span>
+              <span id="count-unstudied" class="font-semibold text-slate-700 dark:text-slate-300">0</span>
+            </div>
+            <div class="flex justify-between items-center font-bold text-slate-900 dark:text-white">
+              <span>Total tarjetas</span>
+              <span id="count-total">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters Box -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+            <span>🔍</span> Filtros y Búsqueda
+          </h3>
+
+          <!-- Search Input -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar en tarjetas</label>
+            <input
+              type="text"
+              id="search-input"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              placeholder="Ej. miopía, Kotler, PESTEL..."
+            />
+          </div>
+
+          <!-- Tema / Bloque -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Bloque Temático</label>
+            <select
+              id="filter-block"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="all">Todos los bloques (1 - 5)</option>
+              <option value="1">Bloque 1: Fundamentos y Entorno</option>
+              <option value="2">Bloque 2: Investigación y Consumidor</option>
+              <option value="3">Bloque 3: Estrategia y Segmentación</option>
+              <option value="4">Bloque 4: Marketing Mix (4Ps)</option>
+              <option value="5">Bloque 5: Marketing Digital y Tendencias</option>
+            </select>
+          </div>
+
+          <!-- Dificultad (Clasificación dinámica) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Dificultad Estimada</label>
+            <select
+              id="filter-difficulty"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="all">Todas las dificultades</option>
+              <option value="Fácil">Fácil (Bloque 1)</option>
+              <option value="Medio">Medio (Bloques 2 y 3)</option>
+              <option value="Difícil">Difícil (Bloques 4 y 5)</option>
+            </select>
+          </div>
+
+          <!-- Estado de Dominio -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Estado de Aprendizaje</label>
+            <select
+              id="filter-mastery"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="all">Cualquier estado</option>
+              <option value="unstudied">Sin estudiar</option>
+              <option value="know">Lo sé bien 👍</option>
+              <option value="review">Por repasar 🧐</option>
+              <option value="hard">Difícil 🚨</option>
+            </select>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Column: Card Player and Deck Grid -->
+      <section class="lg:col-span-8 flex flex-col items-center">
+        <!-- Flashcard Component Container -->
+        <div class="w-full max-w-2xl aspect-[1.6/1] sm:aspect-[1.8/1] relative perspective group cursor-pointer mb-6" id="flashcard-wrapper">
+          <!-- Flip Card Inner -->
+          <div id="flashcard-card" class="w-full h-full rounded-3xl transition-transform duration-500 transform-style-3d relative shadow-lg dark:shadow-teal-950/20 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            
+            <!-- FRONT SIDE -->
+            <div class="absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between backface-hidden rounded-3xl overflow-y-auto">
+              <!-- Top bar info -->
+              <div class="flex justify-between items-start text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-full" id="card-front-tag">Bloque 1 • ID</span>
+                <span class="px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full" id="card-front-category">Categoría</span>
+              </div>
+              
+              <!-- Core Question -->
+              <div class="my-auto text-center py-4">
+                <h3 class="text-xl sm:text-2xl font-bold font-display text-slate-800 dark:text-white leading-snug" id="card-front-question">
+                  ¿Pregunta?
+                </h3>
+              </div>
+
+              <!-- Bottom interactive row -->
+              <div class="flex justify-between items-center border-t border-slate-100 dark:border-slate-800/60 pt-4">
+                <button 
+                  id="btn-show-hint"
+                  class="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 py-1 px-2.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg animate-pulse"
+                >
+                  💡 Ver pista
+                </button>
+                <span class="text-xs font-medium text-slate-400">
+                  Haz clic en la tarjeta para voltearla 🔄
+                </span>
+              </div>
+            </div>
+
+            <!-- BACK SIDE -->
+            <div class="absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between backface-hidden rounded-3xl transform rotate-y-180 bg-slate-50 dark:bg-slate-900/60 overflow-y-auto">
+              <!-- Top header -->
+              <div class="flex justify-between items-center text-xs font-semibold border-b border-slate-200 dark:border-slate-800/80 pb-2">
+                <span class="text-teal-600 dark:text-teal-400 font-bold" id="card-back-tag">Respuesta</span>
+                <span class="text-slate-500" id="card-back-category">Categoría</span>
+              </div>
+
+              <!-- Core Answer -->
+              <div class="my-auto py-3">
+                <p class="text-base sm:text-lg text-slate-700 dark:text-slate-200 leading-relaxed text-center" id="card-back-answer">
+                  Esta es la respuesta detallada de la flashcard...
+                </p>
+                <p class="mt-3 text-xs italic text-indigo-600 dark:text-indigo-400 text-center" id="card-back-hint">
+                  Pista: ...
+                </p>
+              </div>
+
+              <!-- Mastery marking actions -->
+              <div class="border-t border-slate-200 dark:border-slate-800/80 pt-4">
+                <p class="text-center text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">¿Cómo dominas esta tarjeta?</p>
+                <div class="grid grid-cols-3 gap-2.5">
+                  <button 
+                    class="btn-mastery py-2.5 px-2 text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-sm flex flex-col items-center justify-center"
+                    data-state="know"
+                  >
+                    <span>Lo sé bien</span>
+                    <span class="text-[10px] opacity-80 mt-0.5">👍 (Fácil)</span>
+                  </button>
+                  <button 
+                    class="btn-mastery py-2.5 px-2 text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-all shadow-sm flex flex-col items-center justify-center"
+                    data-state="review"
+                  >
+                    <span>Por repasar</span>
+                    <span class="text-[10px] opacity-80 mt-0.5">🧐 (Medio)</span>
+                  </button>
+                  <button 
+                    class="btn-mastery py-2.5 px-2 text-xs sm:text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all shadow-sm flex flex-col items-center justify-center"
+                    data-state="hard"
+                  >
+                    <span>Es difícil</span>
+                    <span class="text-[10px] opacity-80 mt-0.5">🚨 (Volver)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Navigation Controls underneath card -->
+        <div class="flex items-center justify-between w-full max-w-2xl mb-10 px-2">
+          <div class="flex gap-2">
+            <button
+              id="btn-mix"
+              class="p-2.5 text-sm font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-700 dark:text-slate-300 transition-all cursor-pointer"
+              title="Mezclar tarjetas aleatoriamente"
+            >
+              🔀 Mezclar
+            </button>
+            <button
+              id="btn-unmix"
+              class="p-2.5 text-sm font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 transition-all cursor-pointer"
+              title="Restaurar orden original"
+            >
+              🔢 Ordenar
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              id="btn-prev"
+              class="w-10 h-10 flex items-center justify-center font-bold bg-slate-950 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-full transition-all cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              ←
+            </button>
+            <span id="deck-counter" class="text-sm font-bold text-slate-700 dark:text-slate-300">
+              1 de 150
+            </span>
+            <button
+              id="btn-next"
+              class="w-10 h-10 flex items-center justify-center font-bold bg-slate-950 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-full transition-all cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              →
+            </button>
+          </div>
+        </div>
+
+        <!-- Deck Listing Grid below -->
+        <div class="w-full">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Lista de Tarjetas en este Filtro</h3>
+            <span id="filtered-badge" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs px-2.5 py-1 rounded-full font-bold">150 mostradas</span>
+          </div>
+          <div id="deck-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-72 overflow-y-auto p-2 bg-slate-100/50 dark:bg-slate-950/20 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+            <!-- Dynamic elements load here -->
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<style>
+  /* 3D Flip Card CSS */
+  .perspective {
+    perspective: 1500px;
+  }
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  .rotate-y-active {
+    transform: rotateY(180deg);
+  }
+</style>
+
+<script>
+  // Import mock flashcards
+  import { flashcards as originalFlashcards } from '../data/flashcards';
+
+  // Storage keys
+  const PROGRESS_KEY = 'senderos_flashcards_progress_v1';
+  const REINFORCEMENT_KEY = 'senderos_flashcards_refuerzo';
+
+  // DOM elements
+  const flashcardWrapper = document.getElementById('flashcard-wrapper');
+  const flashcardCard = document.getElementById('flashcard-card');
+  const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
+  const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
+  const deckCounter = document.getElementById('deck-counter');
+  const filteredBadge = document.getElementById('filtered-badge');
+  const deckGrid = document.getElementById('deck-grid');
+
+  // Fields inside card Front
+  const cardFrontTag = document.getElementById('card-front-tag');
+  const cardFrontCategory = document.getElementById('card-front-category');
+  const cardFrontQuestion = document.getElementById('card-front-question');
+  const btnShowHint = document.getElementById('btn-show-hint');
+
+  // Fields inside card Back
+  const cardBackTag = document.getElementById('card-back-tag');
+  const cardBackCategory = document.getElementById('card-back-category');
+  const cardBackAnswer = document.getElementById('card-back-answer');
+  const cardBackHint = document.getElementById('card-back-hint');
+
+  // Actions
+  const btnMix = document.getElementById('btn-mix');
+  const btnUnmix = document.getElementById('btn-unmix');
+  const btnResetProgress = document.getElementById('btn-reset-progress');
+  const btnExportCsv = document.getElementById('btn-export-csv');
+
+  // Filters
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const filterBlock = document.getElementById('filter-block') as HTMLSelectElement;
+  const filterDifficulty = document.getElementById('filter-difficulty') as HTMLSelectElement;
+  const filterMastery = document.getElementById('filter-mastery') as HTMLSelectElement;
+
+  // Tabs
+  const tabStandard = document.getElementById('tab-standard');
+  const tabReinforcement = document.getElementById('tab-reinforcement');
+  const reinforcementBadge = document.getElementById('reinforcement-badge');
+
+  // Progress metrics DOM
+  const barKnow = document.getElementById('bar-know');
+  const barReview = document.getElementById('bar-review');
+  const barHard = document.getElementById('bar-hard');
+  const countKnow = document.getElementById('count-know');
+  const countReview = document.getElementById('count-review');
+  const countHard = document.getElementById('count-hard');
+  const countUnstudied = document.getElementById('count-unstudied');
+  const countTotal = document.getElementById('count-total');
+
+  // Internal states
+  let currentTab = 'standard'; // 'standard' or 'reinforcement'
+  let studyList: any[] = []; // Current list of cards to study in active tab
+  let filteredList: any[] = []; // Cards after applying active filters
+  let currentIndex = 0;
+  let isFlipped = false;
+
+  // Progress map: ID -> 'know' | 'review' | 'hard'
+  let progressMap: Record<string, string> = {};
+
+  // Load progress from localStorage
+  function loadProgress() {
+    try {
+      const stored = localStorage.getItem(PROGRESS_KEY);
+      if (stored) {
+        progressMap = JSON.parse(stored);
+      } else {
+        progressMap = {};
+      }
+    } catch (e) {
+      progressMap = {};
+    }
+  }
+
+  // Save progress
+  function saveProgress() {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progressMap));
+    updateProgressUI();
+  }
+
+  // Load reinforcement cards
+  function getReinforcementCards(): any[] {
+    try {
+      const stored = localStorage.getItem(REINFORCEMENT_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Set difficulty dynamically based on block
+  function getCardDifficulty(card: any) {
+    if (card.block === 1) return 'Fácil';
+    if (card.block === 2 || card.block === 3) return 'Medio';
+    return 'Difícil';
+  }
+
+  // Update progress bars & stats
+  function updateProgressUI() {
+    const list = currentTab === 'standard' ? originalFlashcards : getReinforcementCards();
+    const total = list.length;
+
+    let knowCount = 0;
+    let reviewCount = 0;
+    let hardCount = 0;
+
+    list.forEach(c => {
+      const state = progressMap[c.id];
+      if (state === 'know') knowCount++;
+      else if (state === 'review') reviewCount++;
+      else if (state === 'hard') hardCount++;
+    });
+
+    const unstudiedCount = total - (knowCount + reviewCount + hardCount);
+
+    // Update numbers
+    if (countKnow) countKnow.textContent = String(knowCount);
+    if (countReview) countReview.textContent = String(reviewCount);
+    if (countHard) countHard.textContent = String(hardCount);
+    if (countUnstudied) countUnstudied.textContent = String(unstudiedCount);
+    if (countTotal) countTotal.textContent = String(total);
+
+    // Percentages
+    const pKnow = total > 0 ? (knowCount / total) * 100 : 0;
+    const pReview = total > 0 ? (reviewCount / total) * 100 : 0;
+    const pHard = total > 0 ? (hardCount / total) * 100 : 0;
+
+    if (barKnow) barKnow.style.width = `${pKnow}%`;
+    if (barReview) barReview.style.width = `${pReview}%`;
+    if (barHard) barHard.style.width = `${pHard}%`;
+
+    // Update reinforcement count badge
+    const reinCards = getReinforcementCards();
+    if (reinforcementBadge) {
+      reinforcementBadge.textContent = String(reinCards.length);
+    }
+  }
+
+  // Apply filters to card list
+  function applyFilters() {
+    const query = searchInput.value.toLowerCase().trim();
+    const blockVal = filterBlock.value;
+    const difficultyVal = filterDifficulty.value;
+    const masteryVal = filterMastery.value;
+
+    filteredList = studyList.filter(card => {
+      // Search
+      const matchSearch = 
+        card.question.toLowerCase().includes(query) ||
+        card.answer.toLowerCase().includes(query) ||
+        (card.hint && card.hint.toLowerCase().includes(query)) ||
+        card.id.toLowerCase().includes(query);
+      if (!matchSearch) return false;
+
+      // Block filter
+      if (blockVal !== 'all') {
+        if (String(card.block) !== blockVal) return false;
+      }
+
+      // Difficulty
+      if (difficultyVal !== 'all') {
+        const diff = getCardDifficulty(card);
+        if (diff !== difficultyVal) return false;
+      }
+
+      // Mastery status
+      if (masteryVal !== 'all') {
+        const state = progressMap[card.id] || 'unstudied';
+        if (state !== masteryVal) return false;
+      }
+
+      return true;
+    });
+
+    // Reset index to 0
+    currentIndex = 0;
+    renderCurrentCard();
+    renderDeckGrid();
+  }
+
+  // Render card based on currentIndex
+  function renderCurrentCard() {
+    isFlipped = false;
+    if (flashcardCard) {
+      flashcardCard.classList.remove('rotate-y-active');
+    }
+
+    if (filteredList.length === 0) {
+      // Empty state
+      if (cardFrontQuestion) {
+        cardFrontQuestion.innerHTML = `<span class="text-slate-400 dark:text-slate-500 text-base block font-medium mb-2">No se encontraron tarjetas</span> intente modificar los filtros o el cuadro de búsqueda.`;
+      }
+      if (cardFrontTag) cardFrontTag.textContent = 'VACÍO';
+      if (cardFrontCategory) cardFrontCategory.textContent = 'Ninguno';
+      if (deckCounter) deckCounter.textContent = '0 de 0';
+      btnPrev.disabled = true;
+      btnNext.disabled = true;
+      return;
+    }
+
+    btnPrev.disabled = currentIndex === 0;
+    btnNext.disabled = currentIndex === filteredList.length - 1;
+
+    if (deckCounter) {
+      deckCounter.textContent = `${currentIndex + 1} de ${filteredList.length}`;
+    }
+
+    const card = filteredList[currentIndex];
+    const difficulty = getCardDifficulty(card);
+
+    // Front content
+    if (cardFrontTag) cardFrontTag.textContent = `${card.id} • Bloque ${card.block || 'R'} • ${difficulty}`;
+    if (cardFrontCategory) cardFrontCategory.textContent = card.category;
+    if (cardFrontQuestion) cardFrontQuestion.textContent = card.question;
+
+    // Back content
+    if (cardBackTag) cardBackTag.textContent = `Respuesta (${card.id})`;
+    if (cardBackCategory) cardBackCategory.textContent = card.category;
+    if (cardBackAnswer) cardBackAnswer.textContent = card.answer;
+    if (cardBackHint) cardBackHint.textContent = card.hint ? `💡 Pista: ${card.hint}` : '';
+  }
+
+  // Render grid list below card
+  function renderDeckGrid() {
+    if (!deckGrid) return;
+    deckGrid.innerHTML = '';
+
+    if (filteredBadge) {
+      filteredBadge.textContent = `${filteredList.length} de ${studyList.length} mostradas`;
+    }
+
+    filteredList.forEach((card, index) => {
+      const state = progressMap[card.id] || 'unstudied';
+      let stateColor = 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900';
+      let stateDot = 'bg-slate-300 dark:bg-slate-600';
+
+      if (state === 'know') {
+        stateColor = 'border-emerald-200 dark:border-emerald-950 bg-emerald-50/20 dark:bg-emerald-950/10 hover:bg-emerald-50/30';
+        stateDot = 'bg-emerald-500';
+      } else if (state === 'review') {
+        stateColor = 'border-amber-200 dark:border-amber-950 bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/30';
+        stateDot = 'bg-amber-500';
+      } else if (state === 'hard') {
+        stateColor = 'border-rose-200 dark:border-rose-950 bg-rose-50/20 dark:bg-rose-950/10 hover:bg-rose-50/30';
+        stateDot = 'bg-rose-500';
+      }
+
+      const activeBorder = index === currentIndex ? 'ring-2 ring-teal-500 font-extrabold' : '';
+
+      const btn = document.createElement('button');
+      btn.className = `flex flex-col text-left p-2.5 rounded-xl border text-xs transition-all ${stateColor} ${activeBorder} w-full focus:outline-none`;
+      btn.innerHTML = `
+        <div class="flex items-center justify-between w-full mb-1">
+          <span class="font-bold text-slate-500 dark:text-slate-400">${card.id}</span>
+          <span class="w-2 h-2 rounded-full ${stateDot}"></span>
+        </div>
+        <p class="text-slate-800 dark:text-slate-200 font-semibold line-clamp-2 leading-tight">${card.question}</p>
+      `;
+      btn.addEventListener('click', () => {
+        currentIndex = index;
+        renderCurrentCard();
+        renderDeckGrid();
+        // Scroll to card viewer smoothly
+        flashcardWrapper?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+
+      deckGrid.appendChild(btn);
+    });
+  }
+
+  // Switch tabs
+  function switchTab(tab: string) {
+    currentTab = tab;
+
+    // Update active tab styles
+    if (tab === 'standard') {
+      tabStandard?.classList.add('border-teal-500', 'text-teal-600', 'dark:text-teal-400');
+      tabStandard?.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+      tabReinforcement?.classList.remove('border-teal-500', 'text-teal-600', 'dark:text-teal-400');
+      tabReinforcement?.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+      
+      // Load standard cards
+      studyList = [...originalFlashcards];
+      filterBlock.disabled = false;
+      filterDifficulty.disabled = false;
+    } else {
+      tabReinforcement?.classList.add('border-teal-500', 'text-teal-600', 'dark:text-teal-400');
+      tabReinforcement?.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+      tabStandard?.classList.remove('border-teal-500', 'text-teal-600', 'dark:text-teal-400');
+      tabStandard?.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+      
+      // Load reinforcement cards
+      studyList = getReinforcementCards();
+      // Reset block/difficulty selectors
+      filterBlock.value = 'all';
+      filterDifficulty.value = 'all';
+      filterBlock.disabled = true;
+      filterDifficulty.disabled = true;
+    }
+
+    updateProgressUI();
+    applyFilters();
+  }
+
+  // Setup click triggers
+  function setupEvents() {
+    // Flip card trigger
+    flashcardWrapper?.addEventListener('click', (e) => {
+      // Don't flip card if user clicked action buttons inside it
+      const target = e.target as HTMLElement;
+      if (target.closest('button') || target.closest('.btn-mastery')) {
+        return;
+      }
+      isFlipped = !isFlipped;
+      if (flashcardCard) {
+        if (isFlipped) {
+          flashcardCard.classList.add('rotate-y-active');
+        } else {
+          flashcardCard.classList.remove('rotate-y-active');
+        }
+      }
+    });
+
+    // Pista (Front)
+    btnShowHint?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = filteredList[currentIndex];
+      if (card && card.hint) {
+        // @ts-ignore
+        window.showToast?.(`💡 Pista: ${card.hint}`, 'info');
+      } else {
+        // @ts-ignore
+        window.showToast?.('Esta tarjeta no tiene una pista configurada.', 'info');
+      }
+    });
+
+    // Navigation Buttons
+    btnPrev.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCurrentCard();
+        renderDeckGrid();
+      }
+    });
+
+    btnNext.addEventListener('click', () => {
+      if (currentIndex < filteredList.length - 1) {
+        currentIndex++;
+        renderCurrentCard();
+        renderDeckGrid();
+      }
+    });
+
+    // Mastery Buttons on Back Side
+    document.querySelectorAll('.btn-mastery').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const state = btn.getAttribute('data-state');
+        const card = filteredList[currentIndex];
+        if (card && state) {
+          progressMap[card.id] = state;
+          saveProgress();
+          
+          let stateLabel = state === 'know' ? 'Lo sé bien' : state === 'review' ? 'Por repasar' : 'Difícil';
+          // @ts-ignore
+          window.showToast?.(`Tarjeta ${card.id} clasificada como "${stateLabel}"`, 'success');
+
+          // Auto-advance after 500ms
+          setTimeout(() => {
+            if (currentIndex < filteredList.length - 1) {
+              currentIndex++;
+              renderCurrentCard();
+              renderDeckGrid();
+            } else {
+              renderDeckGrid(); // Refresh grid colors
+            }
+          }, 400);
+        }
+      });
+    });
+
+    // Mix (Shuffle)
+    btnMix?.addEventListener('click', () => {
+      if (filteredList.length <= 1) return;
+      // Durstenfeld shuffle
+      for (let i = filteredList.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filteredList[i], filteredList[j]] = [filteredList[j], filteredList[i]];
+      }
+      currentIndex = 0;
+      renderCurrentCard();
+      renderDeckGrid();
+      // @ts-ignore
+      window.showToast?.('Orden de tarjetas mezclado aleatoriamente.', 'info');
+    });
+
+    // Order (Restore original order)
+    btnUnmix?.addEventListener('click', () => {
+      applyFilters(); // Re-applies current filters on the studyList (original sorted list)
+      // @ts-ignore
+      window.showToast?.('Orden original de tarjetas restaurado.', 'info');
+    });
+
+    // Reset progress
+    btnResetProgress?.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que quieres reiniciar tu progreso? Esto borrará tus niveles de dominio guardados.')) {
+        progressMap = {};
+        localStorage.setItem(PROGRESS_KEY, '{}');
+        updateProgressUI();
+        applyFilters();
+        // @ts-ignore
+        window.showToast?.('Progreso de flashcards reiniciado.', 'success');
+      }
+    });
+
+    // Export CSV
+    btnExportCsv?.addEventListener('click', () => {
+      const listToExport = currentTab === 'standard' ? originalFlashcards : getReinforcementCards();
+      if (listToExport.length === 0) {
+        // @ts-ignore
+        window.showToast?.('No hay tarjetas disponibles para exportar.', 'warning');
+        return;
+      }
+
+      // Generate CSV string
+      const headers = ['ID', 'Bloque', 'Pregunta', 'Respuesta', 'Categoria', 'Dificultad', 'Estado de Dominio'];
+      const csvRows = [
+        headers.join(',')
+      ];
+
+      listToExport.forEach(card => {
+        const difficulty = getCardDifficulty(card);
+        const stateVal = progressMap[card.id] || 'unstudied';
+        let stateLabel = 'Sin estudiar';
+        if (stateVal === 'know') stateLabel = 'Lo sé bien';
+        if (stateVal === 'review') stateLabel = 'Por repasar';
+        if (stateVal === 'hard') stateLabel = 'Difícil';
+
+        const row = [
+          `"${card.id}"`,
+          `"${card.block || 'R'}"`,
+          `"${card.question.replace(/"/g, '""')}"`,
+          `"${card.answer.replace(/"/g, '""')}"`,
+          `"${card.category.replace(/"/g, '""')}"`,
+          `"${difficulty}"`,
+          `"${stateLabel}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = '\uFEFF' + csvRows.join('\n'); // Adding UTF-8 BOM
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `progreso_flashcards_${currentTab}_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      // @ts-ignore
+      window.showToast?.('CSV exportado correctamente.', 'success');
+    });
+
+    // Listeners for filters
+    searchInput?.addEventListener('input', applyFilters);
+    filterBlock?.addEventListener('change', applyFilters);
+    filterDifficulty?.addEventListener('change', applyFilters);
+    filterMastery?.addEventListener('change', applyFilters);
+
+    // Tab Listeners
+    tabStandard?.addEventListener('click', () => switchTab('standard'));
+    tabReinforcement?.addEventListener('click', () => switchTab('reinforcement'));
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProgress();
+    // Default start with standard list
+    studyList = [...originalFlashcards];
+    applyFilters();
+    setupEvents();
+  });
+</script>

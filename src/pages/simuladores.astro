@@ -1,0 +1,366 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Toast from '../components/Toast.astro';
+import { simulators } from '../data/simulators';
+---
+
+<Layout title="Simuladores Académicos" description="Evalúa tus conocimientos en mercadotecnia con nuestros simuladores interactivos de examen. Elige el modo de práctica o evaluación.">
+  <Navbar />
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow animate-fade-in">
+    <!-- Page Header -->
+    <div class="mb-8 text-center lg:text-left flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+          Simuladores de Examen
+        </h1>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+          Configura tus datos académicos, elige tu modo de entrenamiento preferido y pon a prueba tu dominio sobre los fundamentos de mercadotecnia.
+        </p>
+      </div>
+      
+      <!-- Link to History -->
+      <div class="flex gap-3 justify-center lg:justify-end">
+        <a
+          href="/registro-notas"
+          class="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-sm"
+        >
+          <span>📊</span> Ver Historial Detallado
+        </a>
+      </div>
+    </div>
+
+    <!-- Global Performance Dashboard (Loaded via JS) -->
+    <section class="mb-8 bg-gradient-to-br from-teal-50 to-indigo-50/50 dark:from-slate-950 dark:to-slate-900 border border-teal-100/80 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <span>📊</span> Resumen General de Rendimiento
+      </h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm text-center">
+          <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Intentos</p>
+          <p id="stat-total-attempts" class="text-3xl font-extrabold text-teal-600 dark:text-teal-400 mt-1">0</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm text-center">
+          <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Promedio General</p>
+          <p id="stat-avg-score" class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">0.00</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm text-center">
+          <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tasa de Aprobación</p>
+          <p id="stat-pass-rate" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">0%</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm text-center">
+          <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Mejor Calificación</p>
+          <p id="stat-best-score" class="text-3xl font-extrabold text-amber-500 mt-1">0.00</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left Column: Setup Panel -->
+      <section class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 dark:border-slate-800 pb-4">
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Configuración del Simulador
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Estos datos se guardarán localmente para tu registro de notas y reportes al docente.</p>
+        </div>
+
+        <form id="simulator-settings-form" class="space-y-4" onsubmit="event.preventDefault();">
+          <!-- Student Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Nombre del Estudiante *</label>
+            <input
+              type="text"
+              id="student-name"
+              required
+              class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              placeholder="Ej. Juan Pérez"
+            />
+          </div>
+
+          <!-- Paralelo / Curso -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Paralelo / Aula *</label>
+            <input
+              type="text"
+              id="student-group"
+              required
+              class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              placeholder="Ej. Paralelo A / Aula 302"
+            />
+          </div>
+
+          <!-- Docente Correo -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Correo del Docente *</label>
+            <input
+              type="email"
+              id="teacher-email"
+              required
+              class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              placeholder="Ej. docente@universidad.edu"
+            />
+          </div>
+
+          <!-- Mode Selector -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Modo de Ejecución</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="relative flex flex-col p-3 border border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-950/30 transition-all select-none">
+                <input type="radio" name="sim-mode" value="practice" checked class="sr-only peer" />
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Práctica</span>
+                <span class="text-[10px] text-slate-500 mt-1">Sin tiempo límite estricto, respuestas explicadas de inmediato.</span>
+                <span class="absolute top-2 right-2 w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center peer-checked:bg-teal-500 peer-checked:border-teal-500 after:content-[''] after:w-1.5 after:h-1.5 after:bg-white after:rounded-full"></span>
+              </label>
+              <label class="relative flex flex-col p-3 border border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-950/30 transition-all select-none">
+                <input type="radio" name="sim-mode" value="evaluation" class="sr-only peer" />
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200 font-display">Evaluación</span>
+                <span class="text-[10px] text-slate-500 mt-1">Tiempo límite, se evalúa al final sin ayudas.</span>
+                <span class="absolute top-2 right-2 w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center peer-checked:bg-teal-500 peer-checked:border-teal-500 after:content-[''] after:w-1.5 after:h-1.5 after:bg-white after:rounded-full"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Question Count Selector -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Cantidad de Preguntas</label>
+            <select
+              id="question-count"
+              class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="10">10 Preguntas (Rápido)</option>
+              <option value="20">20 Preguntas (Recomendado)</option>
+              <option value="30">30 Preguntas (Extenso)</option>
+              <option value="all">Todas las preguntas disponibles (Hasta 40)</option>
+            </select>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right Column: Simulators List -->
+      <section class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {simulators.map(sim => (
+          <div 
+            class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+            data-sim-card={sim.id}
+          >
+            <div>
+              <div class="flex justify-between items-start mb-4">
+                <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full">
+                  {sim.blockTarget}
+                </span>
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  ⏱️ {sim.timeLimitMinutes} min
+                </span>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors duration-200">
+                {sim.title}
+              </h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-2.5 leading-relaxed line-clamp-3">
+                {sim.description}
+              </p>
+            </div>
+
+            <!-- Per-simulator stats injection -->
+            <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-100 dark:border-slate-800 text-xs space-y-1.5">
+              <div class="flex justify-between">
+                <span class="text-slate-500">Intentos realizados:</span>
+                <span class="font-bold text-slate-700 dark:text-slate-300" data-sim-stat="attempts">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Mejor Calificación:</span>
+                <span class="font-bold text-slate-700 dark:text-slate-300" data-sim-stat="best">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500 font-medium">Promedio:</span>
+                <span class="font-bold text-slate-700 dark:text-slate-300" data-sim-stat="avg">-</span>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                📝 Máx. {sim.totalQuestions} Preguntas
+              </span>
+              <button
+                class="btn-start-sim px-4 py-2 text-xs font-bold bg-slate-950 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-white rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                data-slug={sim.id.toLowerCase()}
+              >
+                <span>Comenzar</span> ➔
+              </button>
+            </div>
+          </div>
+        ))}
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 mt-12">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<script>
+  // Storage keys
+  const SETTINGS_KEY = 'senderos_simulator_settings_v1';
+  const ATTEMPTS_KEY = 'senderos_attempts_v1';
+
+  // DOM references
+  const form = document.getElementById('simulator-settings-form') as HTMLFormElement;
+  const inputName = document.getElementById('student-name') as HTMLInputElement;
+  const inputGroup = document.getElementById('student-group') as HTMLInputElement;
+  const inputEmail = document.getElementById('teacher-email') as HTMLInputElement;
+  const selectCount = document.getElementById('question-count') as HTMLSelectElement;
+
+  // Global Stat Elements
+  const statTotalAttempts = document.getElementById('stat-total-attempts');
+  const statAvgScore = document.getElementById('stat-avg-score');
+  const statPassRate = document.getElementById('stat-pass-rate');
+  const statBestScore = document.getElementById('stat-best-score');
+
+  // Load settings and performance metrics
+  function loadSettingsAndStats() {
+    try {
+      const storedSettings = localStorage.getItem(SETTINGS_KEY);
+      if (storedSettings) {
+        const settings = JSON.parse(storedSettings);
+        if (inputName) inputName.value = settings.name || '';
+        if (inputGroup) inputGroup.value = settings.group || '';
+        if (inputEmail) inputEmail.value = settings.teacherEmail || '';
+        if (selectCount) selectCount.value = settings.questionCount || '20';
+        
+        if (settings.mode) {
+          const radio = document.querySelector(`input[name="sim-mode"][value="${settings.mode}"]`) as HTMLInputElement;
+          if (radio) radio.checked = true;
+        }
+      }
+
+      // Load attempts history
+      const storedAttempts = localStorage.getItem(ATTEMPTS_KEY);
+      const attempts = storedAttempts ? JSON.parse(storedAttempts) : [];
+
+      calculateStats(attempts);
+    } catch (e) {
+      console.error('Error loading settings or stats', e);
+    }
+  }
+
+  // Calculate statistics and render them
+  function calculateStats(attempts: any[]) {
+    const total = attempts.length;
+    let sumScore = 0;
+    let passedCount = 0;
+    let maxScore = 0;
+
+    // Create maps to group by simulator
+    const simStats: Record<string, { attemptsCount: number; scores: number[]; max: number }> = {};
+
+    attempts.forEach(att => {
+      const score = Number(att.score) || 0;
+      sumScore += score;
+      if (att.passed) passedCount++;
+      if (score > maxScore) maxScore = score;
+
+      const simId = att.simulatorId;
+      if (!simStats[simId]) {
+        simStats[simId] = { attemptsCount: 0, scores: [], max: 0 };
+      }
+      simStats[simId].attemptsCount++;
+      simStats[simId].scores.push(score);
+      if (score > simStats[simId].max) {
+        simStats[simId].max = score;
+      }
+    });
+
+    const avg = total > 0 ? sumScore / total : 0;
+    const passRate = total > 0 ? (passedCount / total) * 100 : 0;
+
+    // Render global stats
+    if (statTotalAttempts) statTotalAttempts.textContent = String(total);
+    if (statAvgScore) statAvgScore.textContent = avg.toFixed(2);
+    if (statPassRate) statPassRate.textContent = `${Math.round(passRate)}%`;
+    if (statBestScore) statBestScore.textContent = maxScore.toFixed(2);
+
+    // Render per-simulator stats in cards
+    document.querySelectorAll('[data-sim-card]').forEach(card => {
+      const simId = card.getAttribute('data-sim-card');
+      if (!simId) return;
+
+      const stats = simStats[simId];
+      const attemptsEl = card.querySelector('[data-sim-stat="attempts"]');
+      const bestEl = card.querySelector('[data-sim-stat="best"]');
+      const avgEl = card.querySelector('[data-sim-stat="avg"]');
+
+      if (stats) {
+        const sAvg = stats.scores.reduce((a, b) => a + b, 0) / stats.scores.length;
+        if (attemptsEl) attemptsEl.textContent = String(stats.attemptsCount);
+        if (bestEl) bestEl.textContent = `${stats.max.toFixed(2)}/10`;
+        if (avgEl) avgEl.textContent = `${sAvg.toFixed(2)}/10`;
+      } else {
+        if (attemptsEl) attemptsEl.textContent = '0';
+        if (bestEl) bestEl.textContent = '-';
+        if (avgEl) avgEl.textContent = '-';
+      }
+    });
+  }
+
+  // Get active configurations
+  function getSettingsObj() {
+    const radioMode = document.querySelector('input[name="sim-mode"]:checked') as HTMLInputElement;
+    return {
+      name: inputName?.value.trim() || '',
+      group: inputGroup?.value.trim() || '',
+      teacherEmail: inputEmail?.value.trim() || '',
+      mode: radioMode ? radioMode.value : 'practice',
+      questionCount: selectCount?.value || '20'
+    };
+  }
+
+  function saveSettings() {
+    const settings = getSettingsObj();
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }
+
+  // Setup click triggers to launch simulator
+  function initEvents() {
+    const buttons = document.querySelectorAll('.btn-start-sim');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // Validate form first
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          // @ts-ignore
+          window.showToast?.('Por favor, completa tus datos de estudiante y docente primero.', 'warning');
+          return;
+        }
+
+        // Save active settings
+        saveSettings();
+
+        // Redirect
+        const slug = btn.getAttribute('data-slug');
+        if (slug) {
+          window.location.href = `/simuladores/${slug}`;
+        }
+      });
+    });
+
+    // Auto-save fields on input
+    [inputName, inputGroup, inputEmail, selectCount].forEach(el => {
+      el?.addEventListener('input', saveSettings);
+      el?.addEventListener('change', saveSettings);
+    });
+    document.querySelectorAll('input[name="sim-mode"]').forEach(radio => {
+      radio.addEventListener('change', saveSettings);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadSettingsAndStats();
+    initEvents();
+  });
+</script>

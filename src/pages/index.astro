@@ -1,0 +1,354 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Toast from '../components/Toast.astro';
+
+const modules = [
+  {
+    title: 'Guía de Estudio',
+    description: 'Explora unidades temáticas detalladas con bases académicas sólidas y conceptos clave de marketing.',
+    href: '/guia-estudio',
+    icon: '📚',
+    color: 'from-emerald-500 to-teal-600'
+  },
+  {
+    title: 'Flashcards',
+    description: 'Pon a prueba tu retención y memorización activa con tarjetas interactivas de términos clave.',
+    href: '/flashcards',
+    icon: '🎴',
+    color: 'from-indigo-500 to-purple-600'
+  },
+  {
+    title: 'Simuladores',
+    description: 'Evalúa tus conocimientos con exámenes de opción múltiple estructurados por nivel y tema.',
+    href: '/simuladores',
+    icon: '✍️',
+    color: 'from-sky-500 to-blue-600'
+  },
+  {
+    title: 'Registro de Notas',
+    description: 'Monitorea tu rendimiento, calificaciones guardadas e historial de intentos en simuladores.',
+    href: '/registro-notas',
+    icon: '📊',
+    color: 'from-amber-500 to-orange-600'
+  },
+  {
+    title: 'Glosario de Conceptos',
+    description: 'Buscador rápido de términos clave, definiciones oficiales de marketing y marcos teóricos.',
+    href: '/conceptos',
+    icon: '🔍',
+    color: 'from-pink-500 to-rose-600'
+  },
+  {
+    title: 'Fuentes y Recursos',
+    description: 'Consulta referencias académicas y bibliografía recomendada para expandir tus conocimientos.',
+    href: '/fuentes',
+    icon: '📖',
+    color: 'from-slate-500 to-slate-700'
+  }
+];
+---
+
+<Layout title="Dashboard Académico" description="Bienvenido a Senderos del Conocimiento en Marketing, tu plataforma de autoaprendizaje interactivo.">
+  <Navbar />
+  
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
+    
+    <!-- Hero Header -->
+    <div class="mb-10 text-center lg:text-left flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-8">
+      <div>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-100/80 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300 mb-2">
+          🎓 Asignatura: Fundamentos de Marketing Mix
+        </span>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+          Senderos del Conocimiento en Marketing
+        </h1>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+          Plataforma web de estudio interactiva para el Máster Universitario en Dirección de Marketing y Gestión Comercial.
+        </p>
+      </div>
+
+      <!-- Quick Settings Button -->
+      <div class="flex justify-center">
+        <button
+          id="btn-config-docente"
+          class="flex items-center gap-2 px-4 py-2.5 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-sm cursor-pointer"
+        >
+          ⚙️ Configurar Docente/Perfil
+        </button>
+      </div>
+    </div>
+
+    <!-- Academic Profile Setup Modal (Hidden initially) -->
+    <div id="modal-profile" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-4">
+          ⚙️ Configurar Datos del Estudiante
+        </h3>
+        <button id="btn-close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+        
+        <form id="form-profile-setup" class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1.5">Nombre Completo *</label>
+            <input type="text" id="setup-name" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none" placeholder="Tu Nombre..." />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1.5">Paralelo / Curso *</label>
+            <input type="text" id="setup-group" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none" placeholder="Ej. Paralelo A" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1.5">Correo del Docente *</label>
+            <input type="email" id="setup-email" required class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none" placeholder="docente@universidad.edu" />
+          </div>
+          <button
+            type="submit"
+            class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-extrabold rounded-xl transition-all shadow-md cursor-pointer"
+          >
+            Guardar Configuración
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dynamic Academic Stats Summary Panel -->
+    <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-10">
+      
+      <!-- Stats 1: Intentos -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center">
+        <span class="text-2xl block mb-1">📝</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Intentos Realizados</span>
+        <strong id="stat-attempts" class="text-xl font-extrabold text-slate-800 dark:text-white mt-1 block">0</strong>
+      </div>
+      
+      <!-- Stats 2: Promedio -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center">
+        <span class="text-2xl block mb-1">📈</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Promedio General</span>
+        <strong id="stat-average" class="text-xl font-extrabold text-slate-800 dark:text-white mt-1 block">0.00</strong>
+      </div>
+
+      <!-- Stats 3: Mejor nota -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center">
+        <span class="text-2xl block mb-1">🏆</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Mejor Nota</span>
+        <strong id="stat-best" class="text-xl font-extrabold text-slate-800 dark:text-white mt-1 block">0.00</strong>
+      </div>
+
+      <!-- Stats 4: Último simulador -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center">
+        <span class="text-2xl block mb-1">⏱️</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Último Simulador</span>
+        <strong id="stat-last" class="text-xs font-bold text-teal-600 dark:text-teal-400 mt-1.5 block truncate">Ninguno</strong>
+      </div>
+
+      <!-- Stats 5: Flashcards Dominadas -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center">
+        <span class="text-2xl block mb-1">👍</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Card Dominadas</span>
+        <strong id="stat-fc-know" class="text-xl font-extrabold text-emerald-500 mt-1 block">0</strong>
+      </div>
+
+      <!-- Stats 6: Flashcards Difíciles -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center">
+        <span class="text-2xl block mb-1">🚨</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Card Difíciles</span>
+        <strong id="stat-fc-hard" class="text-xl font-extrabold text-rose-500 mt-1 block">0</strong>
+      </div>
+
+      <!-- Stats 7: Correo Configurado -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm text-center col-span-2 md:col-span-1">
+        <span class="text-2xl block mb-1">📧</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Docente Config.</span>
+        <strong id="stat-teacher" class="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 mt-2 block truncate">Pendiente</strong>
+      </div>
+
+    </section>
+
+    <!-- Student Motivation HUD -->
+    <div id="motivational-banner" class="mb-10 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-950 rounded-2xl p-5 flex items-center gap-4">
+      <span class="text-3xl">💡</span>
+      <div>
+        <h4 class="font-bold text-sm text-slate-800 dark:text-white mb-0.5">Tutor de Orientación Académica</h4>
+        <p id="motivational-msg" class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          ¡Hola! Configura tu perfil académico utilizando el botón en la barra superior para iniciar tu registro y notificaciones al docente.
+        </p>
+      </div>
+    </div>
+
+    <!-- Modules Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {modules.map(mod => (
+        <a 
+          href={mod.href}
+          class="group relative block p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer"
+        >
+          <div class={`absolute top-0 left-0 w-2 h-full bg-gradient-to-b ${mod.color}`}></div>
+          <div class="flex items-center space-x-3 mb-4">
+            <span class="text-3xl" role="img" aria-label={mod.title}>{mod.icon}</span>
+            <h3 class="text-xl font-bold font-display text-slate-800 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors duration-200">
+              {mod.title}
+            </h3>
+          </div>
+          <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            {mod.description}
+          </p>
+        </a>
+      ))}
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<script>
+  const SETTINGS_KEY = 'senderos_simulator_settings_v1';
+  const ATTEMPTS_KEY = 'senderos_attempts_v1';
+  const PROGRESS_KEY = 'senderos_flashcards_progress_v1';
+
+  const modal = document.getElementById('modal-profile');
+  const btnConfig = document.getElementById('btn-config-docente');
+  const btnClose = document.getElementById('btn-close-modal');
+  const form = document.getElementById('form-profile-setup') as HTMLFormElement;
+
+  const sName = document.getElementById('setup-name') as HTMLInputElement;
+  const sGroup = document.getElementById('setup-group') as HTMLInputElement;
+  const sEmail = document.getElementById('setup-email') as HTMLInputElement;
+
+  // Load dashboard metrics
+  function loadDashboard() {
+    let settings = { name: '', group: '', teacherEmail: '' };
+    let attempts = [];
+    let progressMap: Record<string, string> = {};
+
+    try {
+      const storedSet = localStorage.getItem(SETTINGS_KEY);
+      if (storedSet) settings = JSON.parse(storedSet);
+
+      const storedAtt = localStorage.getItem(ATTEMPTS_KEY);
+      if (storedAtt) attempts = JSON.parse(storedAtt);
+
+      const storedProgress = localStorage.getItem(PROGRESS_KEY);
+      if (storedProgress) progressMap = JSON.parse(storedProgress);
+    } catch(e) {}
+
+    // Populate profile inputs
+    if (sName) sName.value = settings.name || '';
+    if (sGroup) sGroup.value = settings.group || '';
+    if (sEmail) sEmail.value = settings.teacherEmail || '';
+
+    // Calculate metrics
+    const attemptsCount = attempts.length;
+    let sumScore = 0;
+    let bestScore = 0;
+    let lastSim = 'Ninguno';
+
+    attempts.forEach(att => {
+      sumScore += att.score;
+      if (att.score > bestScore) bestScore = att.score;
+    });
+
+    if (attemptsCount > 0) {
+      const lastAttempt = attempts[attemptsCount - 1];
+      lastSim = lastAttempt.simulatorId || 'Ninguno';
+    }
+
+    const avgScore = attemptsCount > 0 ? sumScore / attemptsCount : 0;
+
+    let fcKnowCount = 0;
+    let fcHardCount = 0;
+    Object.values(progressMap).forEach(val => {
+      if (val === 'know') fcKnowCount++;
+      if (val === 'hard') fcHardCount++;
+    });
+
+    // Populate DOM Stats
+    const elAttempts = document.getElementById('stat-attempts');
+    const elAverage = document.getElementById('stat-average');
+    const elBest = document.getElementById('stat-best');
+    const elLast = document.getElementById('stat-last');
+    const elFcKnow = document.getElementById('stat-fc-know');
+    const elFcHard = document.getElementById('stat-fc-hard');
+    const elTeacher = document.getElementById('stat-teacher');
+
+    if (elAttempts) elAttempts.textContent = String(attemptsCount);
+    if (elAverage) elAverage.textContent = avgScore.toFixed(2);
+    if (elBest) elBest.textContent = bestScore.toFixed(2);
+    if (elLast) elLast.textContent = lastSim;
+    if (elFcKnow) elFcKnow.textContent = String(fcKnowCount);
+    if (elFcHard) elFcHard.textContent = String(fcHardCount);
+    
+    if (elTeacher) {
+      elTeacher.textContent = settings.teacherEmail || 'Pendiente';
+      elTeacher.title = settings.teacherEmail || 'Pendiente';
+    }
+
+    // Motivational messaging
+    const motivationalMsg = document.getElementById('motivational-msg');
+    if (motivationalMsg) {
+      if (!settings.name) {
+        motivationalMsg.textContent = '¡Hola! Configura tu perfil académico utilizando el botón en la barra superior para iniciar tu registro y notificaciones al docente.';
+      } else if (attemptsCount === 0) {
+        motivationalMsg.textContent = `Bienvenido de vuelta, ${settings.name}. Aún no has realizado intentos de simulador. ¡Te sugerimos repasar la Guía de Estudio y realizar tu primer test de Marketing Mix!`;
+      } else if (avgScore >= 8.5) {
+        motivationalMsg.textContent = `¡Excelente nivel, ${settings.name}! Mantienes un promedio de ${avgScore.toFixed(2)}. Ya dominas gran parte del temario. Sigue practicando antes de tu examen final.`;
+      } else if (avgScore >= 7.0) {
+        motivationalMsg.textContent = `¡Buen trabajo, ${settings.name}! Tu promedio es de ${avgScore.toFixed(2)}. Tus errores se han convertido en tarjetas de refuerzo. Revísalas en la sección de Flashcards para pulir detalles.`;
+      } else {
+        motivationalMsg.textContent = `Repaso urgente recomendado, ${settings.name}. Tu promedio actual es de ${avgScore.toFixed(2)}. Te sugerimos volver a marcar como estudiados los conceptos en la Guía de Estudio y practicar en modo práctica.`;
+      }
+    }
+  }
+
+  // Bind settings modal triggers
+  function setupModal() {
+    btnConfig?.addEventListener('click', () => {
+      modal?.classList.remove('hidden');
+    });
+
+    const closeModal = () => {
+      modal?.classList.add('hidden');
+    };
+
+    btnClose?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const settings = {
+        name: sName.value.trim(),
+        group: sGroup.value.trim(),
+        teacherEmail: sEmail.value.trim()
+      };
+
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      closeModal();
+      loadDashboard();
+      
+      // @ts-ignore
+      window.showToast?.('Perfil académico guardado correctamente.', 'success');
+    });
+  }
+
+  // Welcome toast trigger once per session
+  function welcomeToast() {
+    if (!sessionStorage.getItem('welcome-shown')) {
+      setTimeout(() => {
+        // @ts-ignore
+        window.showToast?.('¡Bienvenido a Senderos del Conocimiento!', 'info');
+        sessionStorage.setItem('welcome-shown', 'true');
+      }, 1000);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+    setupModal();
+    welcomeToast();
+  });
+</script>

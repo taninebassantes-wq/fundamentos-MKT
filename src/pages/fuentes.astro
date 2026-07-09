@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import { sources } from '../data/sources';
+---
+
+<Layout title="Fuentes Académicas" description="Referencias bibliográficas, manuales universitarios y bases académicas de mercadotecnia utilizadas en esta plataforma.">
+  <Navbar />
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
+    
+    <!-- Page Header -->
+    <div class="mb-10 text-center lg:text-left border-b border-slate-200 dark:border-slate-800 pb-8">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100/80 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 mb-3">
+        📖 Bibliografía y Soporte Teórico
+      </span>
+      <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+        Fuentes y Referencias
+      </h1>
+      <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+        Esta plataforma fundamenta todo su contenido en los manuales de referencia más prestigiosos del área de la administración y la mercadotecnia.
+      </p>
+    </div>
+
+    <!-- Adaptation Disclaimer Banner -->
+    <div class="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 dark:from-teal-500/5 dark:to-indigo-500/5 border border-teal-200 dark:border-indigo-900/50 rounded-2xl p-6 md:p-8 shadow-sm mb-12 flex flex-col md:flex-row items-center gap-6">
+      <div class="text-4xl md:text-5xl flex-shrink-0">⚖️</div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white mb-2">
+          Cláusula de Descargo de Responsabilidad y Adaptación Educativa
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          Esta plataforma de aprendizaje interactivo constituye un recurso didáctico complementario orientado a facilitar la autoevaluación y el repaso de conceptos. El contenido aquí provisto es una <strong>adaptación con fines didácticos y académicos</strong> y no debe considerarse un sustituto de las clases magistrales, libros de texto oficiales o manuales de estudio completos recomendados por los claustros universitarios. Se insta a los estudiantes a consultar la bibliografía original para análisis de casos extensos y estudios formales.
+        </p>
+      </div>
+    </div>
+
+    <!-- Bibliography Catalog Grid -->
+    <h2 class="text-xl font-bold font-display text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+      <span>📚</span> Libros y Manuales de Referencia
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {sources.map(source => (
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+          <div>
+            <!-- Book Metadata Header -->
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <span class="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 px-2.5 py-1 rounded-lg">
+                {source.id}
+              </span>
+              <span class="text-xs font-bold text-slate-400 dark:text-slate-500">
+                {source.publisher}
+              </span>
+            </div>
+
+            <!-- Book Title & Authors -->
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1.5 leading-snug">
+              {source.title}
+            </h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 font-medium mb-3">
+              {source.author}
+            </p>
+
+            <!-- Description -->
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+              {source.description}
+            </p>
+          </div>
+
+          <!-- Citation Details -->
+          <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-850 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+            <span>
+              <strong>Edición:</strong> {source.edition}
+            </span>
+            <span>
+              <strong>Año:</strong> {source.year}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Suggested Reading Tips -->
+    <div class="mt-12 bg-slate-100 dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
+      <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+        <span>💡</span> ¿Cómo consultar estas fuentes académicas?
+      </h3>
+      <ul class="list-disc list-inside space-y-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-2">
+        <li>Consulta las bibliotecas universitarias (físicas y digitales) para acceder a los ejemplares completos.</li>
+        <li>Utiliza los capítulos indicados en los planes docentes correspondientes a cada bloque temático.</li>
+        <li>Compara las definiciones hispanoamericanas del manual de <strong>Santesmases</strong> con el enfoque integrador global de <strong>Kotler y Armstrong</strong> para enriquecer tu vocabulario técnico.</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+</Layout>

@@ -1,0 +1,674 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Toast from '../components/Toast.astro';
+import { simulators } from '../data/simulators';
+---
+
+<Layout title="Historial Académico y Registro de Notas" description="Consulta el registro detallado de calificaciones, realiza filtros avanzados de tus intentos y exporta tus reportes académicos en formato CSV.">
+  <Navbar />
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow animate-fade-in">
+    <!-- Page Header -->
+    <div class="mb-8 text-center lg:text-left flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold font-display text-slate-900 dark:text-white">
+          Registro Histórico de Notas
+        </h1>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-2xl">
+          Visualiza, filtra y analiza tus intentos en los simuladores académicos. Exporta el reporte oficial de calificaciones en formato CSV para tu docente.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-3 justify-center lg:justify-end">
+        <button
+          id="btn-export-csv"
+          class="flex items-center gap-2 px-4.5 py-2.5 text-sm font-bold bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-teal-500/20"
+        >
+          <span>📥</span> Exportar Filtrados (CSV)
+        </button>
+        <button
+          id="btn-clear-all"
+          class="flex items-center gap-2 px-4.5 py-2.5 text-sm font-bold bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/30 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all cursor-pointer"
+        >
+          <span>🗑️</span> Borrar Todo el Historial
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats & Filters Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left Sidebar: Filters & Summary Info -->
+      <aside class="lg:col-span-4 space-y-6">
+        
+        <!-- Summary Stats Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <span>📈</span> Rendimiento Filtrado
+          </h3>
+          
+          <div class="space-y-3.5 text-sm">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Intentos mostrados:</span>
+              <strong id="stat-attempts" class="text-slate-800 dark:text-slate-200">0</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Calificación promedio:</span>
+              <strong id="stat-avg-score" class="text-slate-800 dark:text-slate-200">0.00</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Tasa de aprobación:</span>
+              <strong id="stat-pass-rate" class="text-slate-800 dark:text-slate-200">0%</strong>
+            </div>
+            <div class="flex justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3">
+              <span class="text-slate-500">Mejor nota:</span>
+              <strong id="stat-best-score" class="text-amber-500">0.00</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters Form -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+            <span>🔍</span> Filtros Avanzados
+          </h3>
+
+          <!-- Search by Student Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Buscar Estudiante</label>
+            <input
+              type="text"
+              id="filter-student"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              placeholder="Ej. Juan Pérez"
+            />
+          </div>
+
+          <!-- Select Simulator -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Simulador</label>
+            <select
+              id="filter-simulator"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="all">Todos los simuladores</option>
+              {simulators.map(sim => (
+                <option value={sim.id}>{sim.id} - {sim.title.split(":")[1] || sim.title}</option>
+              ))}
+            </select>
+          </div>
+
+          <!-- Select Execution Mode -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Modo de Prueba</label>
+            <select
+              id="filter-mode"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500 outline-none"
+            >
+              <option value="all">Cualquier modo</option>
+              <option value="practice">Práctica</option>
+              <option value="evaluation">Evaluación</option>
+            </select>
+          </div>
+
+          <!-- Minimum Score Slider -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nota Mínima</label>
+              <span id="score-slider-val" class="text-xs font-bold text-teal-600 dark:text-teal-400">0.0</span>
+            </div>
+            <input
+              type="range"
+              id="filter-min-score"
+              min="0"
+              max="10"
+              step="0.5"
+              value="0"
+              class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600"
+            />
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Column: Grades Table -->
+      <section class="lg:col-span-8 space-y-4">
+        
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <th class="py-3 px-4 font-bold">Estudiante / Aula</th>
+                  <th class="py-3 px-4 font-bold">Simulador</th>
+                  <th class="py-3 px-4 font-bold">Modo</th>
+                  <th class="py-3 px-4 font-bold text-center">Calificación</th>
+                  <th class="py-3 px-4 font-bold text-center">Tiempo</th>
+                  <th class="py-3 px-4 font-bold text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="attempts-tbody" class="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs text-slate-700 dark:text-slate-300">
+                <!-- Attempt rows will be dynamically loaded here -->
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Empty State -->
+          <div id="table-empty-state" class="hidden text-center py-16 px-4">
+            <span class="text-3xl">📭</span>
+            <h4 class="font-bold text-slate-800 dark:text-white mt-3 text-sm">No se encontraron registros</h4>
+            <p class="text-slate-500 text-xs mt-1 max-w-sm mx-auto">Prueba ajustando los filtros de búsqueda o realiza un nuevo simulador para generar calificaciones.</p>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- DETAIL ATTEMPT MODAL -->
+    <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden" role="dialog" aria-modal="true">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-3xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800/80 flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📊</span> Calificación en Detalle
+            </h3>
+            <p id="modal-subtitle" class="text-xs text-slate-500 mt-0.5">ID: -</p>
+          </div>
+          <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer p-1">
+            ✕
+          </button>
+        </div>
+
+        <!-- Modal Scrollable Body -->
+        <div class="p-6 overflow-y-auto space-y-6 text-sm flex-grow">
+          <!-- Overview Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Estudiante</span>
+              <p id="modal-student-name" class="font-bold text-slate-800 dark:text-slate-200 text-xs mt-0.5">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Paralelo</span>
+              <p id="modal-student-group" class="font-bold text-slate-800 dark:text-slate-200 text-xs mt-0.5">-</p>
+            </div>
+            <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 rounded-xl text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Modo</span>
+              <p id="modal-mode" class="font-bold text-slate-800 dark:text-slate-200 text-xs mt-0.5">-</p>
+            </div>
+            <div class="p-3 bg-teal-50/50 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900/40 rounded-xl text-center">
+              <span class="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase">Calificación</span>
+              <p id="modal-score" class="font-extrabold text-teal-600 dark:text-teal-400 text-sm mt-0.5">0.00/10</p>
+            </div>
+          </div>
+
+          <!-- Simulation details -->
+          <div class="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-xs space-y-2">
+            <div class="flex justify-between"><span class="text-slate-500 font-bold">Simulador:</span> <span id="modal-sim-title" class="font-semibold">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Docente destinatario:</span> <span id="modal-teacher-email">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Fecha del intento:</span> <span id="modal-date">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Respuestas correctas:</span> <span id="modal-correct-ratio">-</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Tiempo de resolución:</span> <span id="modal-duration">-</span></div>
+          </div>
+
+          <!-- Question-by-question Review list -->
+          <div class="space-y-4">
+            <h4 class="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center gap-1">
+              <span>📋</span> Respuestas del Intento
+            </h4>
+            <div id="modal-questions-review-list" class="space-y-4">
+              <!-- Dynamically injected reviews -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/60 flex justify-end">
+          <button id="btn-close-modal-bottom" class="px-4 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold rounded-xl hover:bg-slate-800 transition-all cursor-pointer">
+            Cerrar Ventana
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/50 mt-12">
+    <p>© {new Date().getFullYear()} Senderos del Conocimiento en Marketing. Plataforma de Aprendizaje Académico.</p>
+  </footer>
+
+  <Toast />
+</Layout>
+
+<script>
+  // Storage keys
+  const ATTEMPTS_KEY = 'senderos_attempts_v1';
+  const REINFORCEMENT_KEY = 'senderos_flashcards_refuerzo';
+
+  // DOM references - filters
+  const filterStudent = document.getElementById('filter-student') as HTMLInputElement;
+  const filterSimulator = document.getElementById('filter-simulator') as HTMLSelectElement;
+  const filterMode = document.getElementById('filter-mode') as HTMLSelectElement;
+  const filterMinScore = document.getElementById('filter-min-score') as HTMLInputElement;
+  const scoreSliderVal = document.getElementById('score-slider-val');
+
+  // DOM references - table
+  const tbody = document.getElementById('attempts-tbody');
+  const emptyState = document.getElementById('table-empty-state');
+
+  // DOM references - stats
+  const statAttempts = document.getElementById('stat-attempts');
+  const statAvgScore = document.getElementById('stat-avg-score');
+  const statPassRate = document.getElementById('stat-pass-rate');
+  const statBestScore = document.getElementById('stat-best-score');
+
+  // DOM references - global actions
+  const btnExportCsv = document.getElementById('btn-export-csv');
+  const btnClearAll = document.getElementById('btn-clear-all');
+
+  // DOM references - Modal
+  const detailModal = document.getElementById('detail-modal');
+  const btnCloseModal = document.getElementById('btn-close-modal');
+  const btnCloseModalBottom = document.getElementById('btn-close-modal-bottom');
+  const modalSubtitle = document.getElementById('modal-subtitle');
+  const modalStudentName = document.getElementById('modal-student-name');
+  const modalStudentGroup = document.getElementById('modal-student-group');
+  const modalMode = document.getElementById('modal-mode');
+  const modalScore = document.getElementById('modal-score');
+  const modalSimTitle = document.getElementById('modal-sim-title');
+  const modalTeacherEmail = document.getElementById('modal-teacher-email');
+  const modalDate = document.getElementById('modal-date');
+  const modalCorrectRatio = document.getElementById('modal-correct-ratio');
+  const modalDuration = document.getElementById('modal-duration');
+  const modalQuestionsReviewList = document.getElementById('modal-questions-review-list');
+
+  // State
+  let attemptsList: any[] = [];
+  let filteredList: any[] = [];
+
+  // Load history from localStorage
+  function loadAttempts() {
+    try {
+      const stored = localStorage.getItem(ATTEMPTS_KEY);
+      attemptsList = stored ? JSON.parse(stored) : [];
+      // Sort attempts by date newest first
+      attemptsList.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    } catch (e) {
+      attemptsList = [];
+    }
+  }
+
+  // Update statistics based on filtered dataset
+  function updateStats() {
+    const count = filteredList.length;
+    let sum = 0;
+    let passed = 0;
+    let max = 0;
+
+    filteredList.forEach(att => {
+      const score = Number(att.score) || 0;
+      sum += score;
+      if (att.passed) passed++;
+      if (score > max) max = score;
+    });
+
+    const avg = count > 0 ? sum / count : 0;
+    const rate = count > 0 ? (passed / count) * 100 : 0;
+
+    if (statAttempts) statAttempts.textContent = String(count);
+    if (statAvgScore) statAvgScore.textContent = avg.toFixed(2);
+    if (statPassRate) statPassRate.textContent = `${Math.round(rate)}%`;
+    if (statBestScore) statBestScore.textContent = max.toFixed(2);
+  }
+
+  // Apply filters
+  function applyFilters() {
+    const studentQuery = filterStudent.value.toLowerCase().trim();
+    const simQuery = filterSimulator.value;
+    const modeQuery = filterMode.value;
+    const minScore = parseFloat(filterMinScore.value);
+
+    // Update slider label
+    if (scoreSliderVal) scoreSliderVal.textContent = minScore.toFixed(1);
+
+    filteredList = attemptsList.filter(att => {
+      // Student name filter
+      if (studentQuery && !att.studentName.toLowerCase().includes(studentQuery)) return false;
+
+      // Simulator filter
+      if (simQuery !== 'all' && att.simulatorId !== simQuery) return false;
+
+      // Mode filter
+      if (modeQuery !== 'all' && att.mode !== modeQuery) return false;
+
+      // Score filter
+      if (att.score < minScore) return false;
+
+      return true;
+    });
+
+    renderTable();
+    updateStats();
+  }
+
+  // Format date nicely
+  function formatDate(isoStr: string) {
+    try {
+      const date = new Date(isoStr);
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch(e) {
+      return isoStr;
+    }
+  }
+
+  // Format duration (seconds -> MM:SS)
+  function formatDuration(sec: number) {
+    if (!sec) return '00:00';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  // Render rows
+  function renderTable() {
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (filteredList.length === 0) {
+      emptyState?.classList.remove('hidden');
+      return;
+    }
+
+    emptyState?.classList.add('hidden');
+
+    filteredList.forEach(att => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800/80 transition-colors';
+      
+      const isPassed = att.passed;
+      const scoreColor = isPassed 
+        ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200' 
+        : 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 border-rose-200';
+
+      tr.innerHTML = `
+        <td class="py-3.5 px-4">
+          <div class="font-bold text-slate-800 dark:text-slate-200">${att.studentName}</div>
+          <div class="text-[10px] text-slate-400 font-semibold">${att.studentGroup}</div>
+        </td>
+        <td class="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-300">
+          <div class="font-bold">${att.simulatorId}</div>
+          <div class="text-[10px] truncate max-w-xs text-slate-400">${att.simulatorTitle.split(':')[1] || att.simulatorTitle}</div>
+        </td>
+        <td class="py-3.5 px-4">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${att.mode === 'practice' ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400' : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400'}">
+            ${att.mode === 'practice' ? 'Práctica' : 'Evaluación'}
+          </span>
+        </td>
+        <td class="py-3.5 px-4 text-center">
+          <span class="inline-block px-2.5 py-1 rounded-lg border text-sm ${scoreColor}">
+            ${att.score.toFixed(2)}
+          </span>
+        </td>
+        <td class="py-3.5 px-4 text-center text-slate-500 font-mono text-xs">
+          ${formatDuration(att.timeSpent)}
+        </td>
+        <td class="py-3.5 px-4 text-center">
+          <div class="flex items-center justify-center gap-2">
+            <button class="btn-view-attempt px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-300 rounded-lg transition-colors cursor-pointer" data-id="${att.id}">
+              🔎 Detalle
+            </button>
+            <button class="btn-delete-attempt px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded-lg transition-colors cursor-pointer" data-id="${att.id}">
+              🗑️
+            </button>
+          </div>
+        </td>
+      `;
+
+      // Detail handler
+      tr.querySelector('.btn-view-attempt')?.addEventListener('click', () => openModal(att.id));
+
+      // Delete handler
+      tr.querySelector('.btn-delete-attempt')?.addEventListener('click', () => deleteAttempt(att.id));
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Open modal attempt detail
+  function openModal(id: string) {
+    const att = attemptsList.find(a => a.id === id);
+    if (!att || !detailModal) return;
+
+    if (modalSubtitle) modalSubtitle.textContent = `ID Intento: ${att.id}`;
+    if (modalStudentName) modalStudentName.textContent = att.studentName;
+    if (modalStudentGroup) modalStudentGroup.textContent = att.studentGroup;
+    if (modalMode) modalMode.textContent = att.mode === 'practice' ? 'Práctica Académica' : 'Evaluación Calificada';
+    if (modalScore) {
+      modalScore.textContent = `${att.score.toFixed(2)} / 10`;
+      modalScore.className = "font-extrabold text-sm mt-0.5 " + (att.passed ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400");
+    }
+
+    if (modalSimTitle) modalSimTitle.textContent = att.simulatorTitle;
+    if (modalTeacherEmail) modalTeacherEmail.textContent = att.teacherEmail;
+    if (modalDate) modalDate.textContent = formatDate(att.timestamp);
+    if (modalCorrectRatio) modalCorrectRatio.textContent = `${att.correctCount} correctas de ${att.totalQuestions} totales`;
+    if (modalDuration) modalDuration.textContent = formatDuration(att.timeSpent);
+
+    // Question reviews list
+    if (modalQuestionsReviewList) {
+      modalQuestionsReviewList.innerHTML = '';
+      
+      att.answers.forEach((ans: any, idx: number) => {
+        const div = document.createElement('div');
+        div.className = `p-4 rounded-xl border text-xs ` + 
+          (ans.isCorrect ? 'border-emerald-100 bg-emerald-50/10 dark:border-emerald-950/20' : 'border-rose-100 bg-rose-50/10 dark:border-rose-950/20');
+
+        div.innerHTML = `
+          <div class="flex justify-between items-center font-bold mb-1.5 text-slate-500">
+            <span>Pregunta ${idx + 1} (${ans.tema})</span>
+            <span class="${ans.isCorrect ? 'text-emerald-600' : 'text-rose-600'}">${ans.isCorrect ? '✓ Correcta' : '✗ Incorrecta'}</span>
+          </div>
+          <p class="font-bold text-slate-800 dark:text-slate-200 mb-2 leading-relaxed">${ans.questionText}</p>
+          <div class="space-y-1 mb-2">
+            <div><span class="font-semibold text-slate-400">Seleccionado:</span> <span class="${ans.isCorrect ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${ans.selectedAnswer}</span></div>
+            ${!ans.isCorrect ? `<div><span class="font-semibold text-slate-400">Correcta:</span> <span class="text-emerald-600 font-bold">${ans.correctAnswer}</span></div>` : ''}
+          </div>
+          <div class="bg-slate-100/50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200/40 dark:border-slate-800 text-slate-600 dark:text-slate-400 leading-normal">
+            <strong>Explicación:</strong> ${ans.explanation}
+          </div>
+
+          ${!ans.isCorrect ? `
+            <button 
+              class="btn-modal-reinforce mt-2.5 inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold rounded cursor-pointer"
+              data-qid="${ans.questionId}"
+              data-qtext="${ans.questionText.replace(/"/g, '&quot;')}"
+              data-qcorrect="${ans.correctAnswer.replace(/"/g, '&quot;')}"
+              data-qexplanation="${ans.explanation.replace(/"/g, '&quot;')}"
+              data-qtema="${ans.tema.replace(/"/g, '&quot;')}"
+              data-simid="${att.simulatorId}"
+            >
+              🔥 Agregar a Refuerzo
+            </button>
+          ` : ''}
+        `;
+
+        // Action to save flashcard reinforcement in modal
+        const btnReinf = div.querySelector('.btn-modal-reinforce');
+        btnReinf?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const qid = btnReinf.getAttribute('data-qid');
+          const qtext = btnReinf.getAttribute('data-qtext') || '';
+          const qcorrect = btnReinf.getAttribute('data-qcorrect') || '';
+          const qexplanation = btnReinf.getAttribute('data-qexplanation') || '';
+          const qtema = btnReinf.getAttribute('data-qtema') || '';
+          const simid = btnReinf.getAttribute('data-simid') || 'SIM-01';
+
+          try {
+            const storedCards = localStorage.getItem(REINFORCEMENT_KEY);
+            const cards = storedCards ? JSON.parse(storedCards) : [];
+
+            if (cards.some((c: any) => c.id === qid)) {
+              // @ts-ignore
+              window.showToast?.('Esta tarjeta de refuerzo ya fue agregada.', 'info');
+              return;
+            }
+
+            cards.push({
+              id: qid,
+              block: simid === 'SIM-06' ? 5 : parseInt(simid.replace('SIM-0', '')),
+              category: qtema,
+              question: qtext,
+              answer: qcorrect,
+              hint: qexplanation.slice(0, 150) + "..."
+            });
+
+            localStorage.setItem(REINFORCEMENT_KEY, JSON.stringify(cards));
+            // @ts-ignore
+            window.showToast?.('Guardado en Refuerzo de Flashcards.', 'success');
+            btnReinf.textContent = '🔥 Guardada';
+            // @ts-ignore
+            btnReinf.disabled = true;
+          } catch(err) {
+            console.error(err);
+          }
+        });
+
+        modalQuestionsReviewList.appendChild(div);
+      });
+    }
+
+    detailModal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  function closeModal() {
+    if (detailModal) {
+      detailModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+  }
+
+  // Delete a single attempt
+  function deleteAttempt(id: string) {
+    if (confirm('¿Estás seguro de que quieres eliminar permanentemente este intento de calificación?')) {
+      attemptsList = attemptsList.filter(a => a.id !== id);
+      localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attemptsList));
+      applyFilters();
+      // @ts-ignore
+      window.showToast?.('Intento eliminado con éxito.', 'success');
+    }
+  }
+
+  // Clear all attempts
+  function clearAllAttempts() {
+    if (confirm('🚨 ¡ATENCIÓN! Estás a punto de borrar todo el historial de calificaciones. Esta acción no se puede deshacer.\n\n¿Deseas continuar?')) {
+      if (confirm('Por favor confirma por segunda vez para vaciar completamente la base de datos de calificaciones.')) {
+        attemptsList = [];
+        localStorage.setItem(ATTEMPTS_KEY, '[]');
+        applyFilters();
+        // @ts-ignore
+        window.showToast?.('Historial de notas vaciado.', 'success');
+      }
+    }
+  }
+
+  // Export filtered attempts to CSV
+  function exportCSV() {
+    if (filteredList.length === 0) {
+      // @ts-ignore
+      window.showToast?.('No hay registros filtrados para exportar.', 'warning');
+      return;
+    }
+
+    const headers = [
+      'ID Intento',
+      'Fecha',
+      'Estudiante',
+      'Paralelo',
+      'Correo Docente',
+      'ID Simulador',
+      'Simulador',
+      'Modo',
+      'Total Preguntas',
+      'Correctas',
+      'Calificacion',
+      'Aprobado',
+      'Tiempo de Resolucion (segundos)'
+    ];
+
+    const rows = [
+      headers.join(',')
+    ];
+
+    filteredList.forEach(att => {
+      const row = [
+        `"${att.id}"`,
+        `"${formatDate(att.timestamp)}"`,
+        `"${att.studentName.replace(/"/g, '""')}"`,
+        `"${att.studentGroup.replace(/"/g, '""')}"`,
+        `"${att.teacherEmail.replace(/"/g, '""')}"`,
+        `"${att.simulatorId}"`,
+        `"${att.simulatorTitle.replace(/"/g, '""')}"`,
+        `"${att.mode}"`,
+        att.totalQuestions,
+        att.correctCount,
+        att.score.toFixed(2),
+        att.passed ? '"SÍ"' : '"NO"',
+        att.timeSpent
+      ];
+      rows.push(row.join(','));
+    });
+
+    const csvContent = '\uFEFF' + rows.join('\n'); // Add UTF-8 BOM
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `registro_notas_marketing_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // @ts-ignore
+    window.showToast?.('Reporte CSV descargado con éxito.', 'success');
+  }
+
+  // Setup event listeners
+  function initEvents() {
+    filterStudent?.addEventListener('input', applyFilters);
+    filterSimulator?.addEventListener('change', applyFilters);
+    filterMode?.addEventListener('change', applyFilters);
+    filterMinScore?.addEventListener('input', applyFilters);
+
+    btnCloseModal?.addEventListener('click', closeModal);
+    btnCloseModalBottom?.addEventListener('click', closeModal);
+    
+    // Close modal by clicking backdrop
+    detailModal?.addEventListener('click', (e) => {
+      if (e.target === detailModal) {
+        closeModal();
+      }
+    });
+
+    // Escape key closes modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    btnExportCsv?.addEventListener('click', exportCSV);
+    btnClearAll?.addEventListener('click', clearAllAttempts);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadAttempts();
+    applyFilters();
+    initEvents();
+  });
+</script>
