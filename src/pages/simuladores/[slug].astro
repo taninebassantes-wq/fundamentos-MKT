@@ -341,64 +341,114 @@ if (!simulator) {
   let timeSpent = 0; // seconds
   let settings = { name: '', group: '', teacherEmail: '', mode: 'practice', questionCount: '20' };
 
-  // DOM elements - lobby
-  const quizLobby = document.getElementById('quiz-lobby');
-  const lobbyName = document.getElementById('lobby-name');
-  const lobbyGroup = document.getElementById('lobby-group');
-  const lobbyEmail = document.getElementById('lobby-email');
-  const lobbyCount = document.getElementById('lobby-question-count');
-  const lobbyMode = document.getElementById('lobby-mode');
-  const btnStartQuiz = document.getElementById('btn-start-quiz');
+  // DOM elements - lobby (deferred queries)
+  let quizLobby = null;
+  let lobbyName = null;
+  let lobbyGroup = null;
+  let lobbyEmail = null;
+  let lobbyCount = null;
+  let lobbyMode = null;
+  let btnStartQuiz = null;
 
   // DOM elements - playground
-  const quizPlayground = document.getElementById('quiz-playground');
-  const hudStudentInfo = document.getElementById('hud-student-info');
-  const hudProgressCounter = document.getElementById('hud-progress-counter');
-  const hudTimerContainer = document.getElementById('hud-timer-container');
-  const hudTimer = document.getElementById('hud-timer');
-  const progressBar = document.getElementById('quiz-progress-bar');
-  const qMetaTopic = document.getElementById('question-meta-topic');
-  const qMetaDifficulty = document.getElementById('question-meta-difficulty');
-  const qText = document.getElementById('question-text');
-  const qOptions = document.getElementById('question-options');
-  const practiceFeedback = document.getElementById('practice-feedback');
-  const feedbackTitle = document.getElementById('feedback-title');
-  const feedbackExplanation = document.getElementById('feedback-explanation');
-  const btnAddReinforcement = document.getElementById('btn-add-reinforcement');
-  const btnPrevQ = document.getElementById('btn-prev-q');
-  const btnNextQ = document.getElementById('btn-next-q');
-  const btnCheckAnswer = document.getElementById('btn-check-answer');
-  const btnSubmitEarly = document.getElementById('btn-submit-early');
+  let quizPlayground = null;
+  let hudStudentInfo = null;
+  let hudProgressCounter = null;
+  let hudTimerContainer = null;
+  let hudTimer = null;
+  let progressBar = null;
+  let qMetaTopic = null;
+  let qMetaDifficulty = null;
+  let qText = null;
+  let qOptions = null;
+  let practiceFeedback = null;
+  let feedbackTitle = null;
+  let feedbackExplanation = null;
+  let btnAddReinforcement = null;
+  let btnPrevQ = null;
+  let btnNextQ = null;
+  let btnCheckAnswer = null;
+  let btnSubmitEarly = null;
 
   // DOM elements - results
-  const quizResults = document.getElementById('quiz-results');
-  const resultsScore = document.getElementById('results-score');
-  const resultsLevel = document.getElementById('results-level');
-  const resultsMetadata = document.getElementById('results-metadata');
-  const resultsCorrect = document.getElementById('results-correct');
-  const resultsIncorrect = document.getElementById('results-incorrect');
-  const resultsTime = document.getElementById('results-time');
-  const btnRetry = document.getElementById('btn-retry');
-  const detailedReviewList = document.getElementById('detailed-review-list');
+  let quizResults = null;
+  let resultsScore = null;
+  let resultsLevel = null;
+  let resultsMetadata = null;
+  let resultsCorrect = null;
+  let resultsIncorrect = null;
+  let resultsTime = null;
+  let btnRetry = null;
+  let detailedReviewList = null;
 
   // DOM elements - simulated email
-  const mailFromStudent = document.getElementById('mail-from-student');
-  const mailToTeacher = document.getElementById('mail-to-teacher');
-  const mailBodyName = document.getElementById('mail-body-name');
-  const mailBodySimTitle = document.getElementById('mail-body-sim-title');
-  const mailBodyStudentDetails = document.getElementById('mail-body-student-details');
-  const mailBodyMode = document.getElementById('mail-body-mode');
-  const mailBodyScore = document.getElementById('mail-body-score');
-  const mailBodyLevel = document.getElementById('mail-body-level');
-  const mailBodyDate = document.getElementById('mail-body-date');
-  const mailBodyRecommendations = document.getElementById('mail-body-recommendations');
-  const mailBodyErrorsSection = document.getElementById('mail-body-errors-section');
-  const btnSendEmail = document.getElementById('btn-send-simulated-email');
+  let mailFromStudent = null;
+  let mailToTeacher = null;
+  let mailBodyName = null;
+  let mailBodySimTitle = null;
+  let mailBodyStudentDetails = null;
+  let mailBodyMode = null;
+  let mailBodyScore = null;
+  let mailBodyLevel = null;
+  let mailBodyDate = null;
+  let mailBodyRecommendations = null;
+  let mailBodyErrorsSection = null;
+  let btnSendEmail = null;
 
   // Initialize page configuration
   function initConfig() {
     try {
-      const lobbyEl = document.getElementById('quiz-lobby');
+      // Resolve DOM queries after page load
+      quizLobby = document.getElementById('quiz-lobby');
+      lobbyName = document.getElementById('lobby-name');
+      lobbyGroup = document.getElementById('lobby-group');
+      lobbyEmail = document.getElementById('lobby-email');
+      lobbyCount = document.getElementById('lobby-question-count');
+      lobbyMode = document.getElementById('lobby-mode');
+      btnStartQuiz = document.getElementById('btn-start-quiz');
+
+      quizPlayground = document.getElementById('quiz-playground');
+      hudStudentInfo = document.getElementById('hud-student-info');
+      hudProgressCounter = document.getElementById('hud-progress-counter');
+      hudTimerContainer = document.getElementById('hud-timer-container');
+      hudTimer = document.getElementById('hud-timer');
+      progressBar = document.getElementById('quiz-progress-bar');
+      qMetaTopic = document.getElementById('question-meta-topic');
+      qMetaDifficulty = document.getElementById('question-meta-difficulty');
+      qText = document.getElementById('question-text');
+      qOptions = document.getElementById('question-options');
+      practiceFeedback = document.getElementById('practice-feedback');
+      feedbackTitle = document.getElementById('feedback-title');
+      feedbackExplanation = document.getElementById('feedback-explanation');
+      btnAddReinforcement = document.getElementById('btn-add-reinforcement');
+      btnPrevQ = document.getElementById('btn-prev-q');
+      btnNextQ = document.getElementById('btn-next-q');
+      btnCheckAnswer = document.getElementById('btn-check-answer');
+      btnSubmitEarly = document.getElementById('btn-submit-early');
+
+      quizResults = document.getElementById('quiz-results');
+      resultsScore = document.getElementById('results-score');
+      resultsLevel = document.getElementById('results-level');
+      resultsMetadata = document.getElementById('results-metadata');
+      resultsCorrect = document.getElementById('results-correct');
+      resultsIncorrect = document.getElementById('results-incorrect');
+      resultsTime = document.getElementById('results-time');
+      btnRetry = document.getElementById('btn-retry');
+      detailedReviewList = document.getElementById('detailed-review-list');
+
+      mailFromStudent = document.getElementById('mail-from-student');
+      mailToTeacher = document.getElementById('mail-to-teacher');
+      mailBodyName = document.getElementById('mail-body-name');
+      mailBodySimTitle = document.getElementById('mail-body-sim-title');
+      mailBodyStudentDetails = document.getElementById('mail-body-student-details');
+      mailBodyMode = document.getElementById('mail-body-mode');
+      mailBodyScore = document.getElementById('mail-body-score');
+      mailBodyLevel = document.getElementById('mail-body-level');
+      mailBodyDate = document.getElementById('mail-body-date');
+      mailBodyRecommendations = document.getElementById('mail-body-recommendations');
+      mailBodyErrorsSection = document.getElementById('mail-body-errors-section');
+      btnSendEmail = document.getElementById('btn-send-simulated-email');
+      const lobbyEl = quizLobby;
       if (lobbyEl) {
         simulatorId = lobbyEl.getAttribute('data-simulator-id') || '';
         simulatorTitle = lobbyEl.getAttribute('data-simulator-title') || '';
