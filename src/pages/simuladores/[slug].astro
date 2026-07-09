@@ -330,13 +330,10 @@ if (!simulator) {
   let userAnswers = {}; // questionIndex -> selectedOptionText
   
   // Read params from DOM wrapper (Astro server data transfer)
-  const lobbyEl = document.getElementById('quiz-lobby');
-  const simulatorId = lobbyEl?.getAttribute('data-simulator-id') || '';
-  const simulatorTitle = lobbyEl?.getAttribute('data-simulator-title') || '';
-  const simulatorTimeMinutes = parseInt(lobbyEl?.getAttribute('data-simulator-time') || '40');
-  const rawQuestionsBase64 = lobbyEl?.getAttribute('data-questions') || '';
-  const decodedQuestions = rawQuestionsBase64 ? decodeURIComponent(escape(atob(rawQuestionsBase64))) : '[]';
-  const allQuestions = JSON.parse(decodedQuestions);
+  let simulatorId = '';
+  let simulatorTitle = '';
+  let simulatorTimeMinutes = 40;
+  let allQuestions = [];
   let isAnswerChecked = {}; // questionIndex -> boolean (only for practice mode)
   let currentIndex = 0;
   let timerInterval = null;
@@ -401,12 +398,22 @@ if (!simulator) {
   // Initialize page configuration
   function initConfig() {
     try {
+      const lobbyEl = document.getElementById('quiz-lobby');
+      if (lobbyEl) {
+        simulatorId = lobbyEl.getAttribute('data-simulator-id') || '';
+        simulatorTitle = lobbyEl.getAttribute('data-simulator-title') || '';
+        simulatorTimeMinutes = parseInt(lobbyEl.getAttribute('data-simulator-time') || '40');
+        const rawQuestionsBase64 = lobbyEl.getAttribute('data-questions') || '';
+        const decodedQuestions = rawQuestionsBase64 ? decodeURIComponent(escape(atob(rawQuestionsBase64))) : '[]';
+        allQuestions = JSON.parse(decodedQuestions);
+      }
+
       const stored = localStorage.getItem(SETTINGS_KEY);
       if (stored) {
         settings = JSON.parse(stored);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Error reading simulator parameters", e);
     }
 
     // Populate form in lobby
