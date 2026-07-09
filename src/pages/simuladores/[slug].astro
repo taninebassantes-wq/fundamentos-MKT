@@ -518,7 +518,6 @@ if (!simulator) {
 
     // Shuffle unseen questions and seen questions within their cohorts to prevent repetitive sequences
     unseen.sort(() => Math.random() - 0.5);
-    // Shuffle equal-weighted seen items roughly
     seen.sort((a, b) => {
       const countDiff = (answeredIdsCount[a.id] || 0) - (answeredIdsCount[b.id] || 0);
       if (countDiff === 0) {
@@ -526,15 +525,18 @@ if (!simulator) {
       }
       return countDiff;
     });
-
     const orderedPool = [...unseen, ...seen];
 
     // Determine target size
     let targetSize = 20;
-    if (settings.questionCount === '10') targetSize = 10;
-    if (settings.questionCount === '20') targetSize = 20;
-    if (settings.questionCount === '30') targetSize = 30;
-    if (settings.questionCount === 'all') targetSize = orderedPool.length;
+    if (settings && settings.questionCount) {
+      if (settings.questionCount === '10') targetSize = 10;
+      if (settings.questionCount === '20') targetSize = 20;
+      if (settings.questionCount === '30') targetSize = 30;
+      if (settings.questionCount === 'all') targetSize = orderedPool.length;
+    } else {
+      targetSize = 20;
+    }
 
     // Slice
     const selected = orderedPool.slice(0, Math.min(targetSize, orderedPool.length));
