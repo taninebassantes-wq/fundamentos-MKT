@@ -1127,7 +1127,10 @@ if (!simulator) {
     });
   }
 
-  // Run on page load
+  // Run immediately and also on page load fallback
+  initConfig();
+  initEvents();
+
   document.addEventListener('DOMContentLoaded', () => {
     initConfig();
     initEvents();
