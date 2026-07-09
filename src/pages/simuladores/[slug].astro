@@ -28,11 +28,15 @@ if (!simulator) {
     <div 
       id="quiz-lobby" 
       class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-md"
-      data-simulator-id={simulator.id}
-      data-simulator-title={simulator.title}
-      data-simulator-time={simulator.timeLimitMinutes}
-      data-questions={Buffer.from(JSON.stringify(questions)).toString('base64')}
     >
+      <script is:inline define:vars={{ simulatorId: simulator.id, simulatorTitle: simulator.title, simulatorTime: simulator.timeLimitMinutes, questionsList: questions }}>
+        window.activeSimulatorData = {
+          id: simulatorId,
+          title: simulatorTitle,
+          time: simulatorTime,
+          questions: questionsList
+        };
+      </script>
       <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full">
@@ -448,14 +452,12 @@ if (!simulator) {
       mailBodyRecommendations = document.getElementById('mail-body-recommendations');
       mailBodyErrorsSection = document.getElementById('mail-body-errors-section');
       btnSendEmail = document.getElementById('btn-send-simulated-email');
-      const lobbyEl = quizLobby;
-      if (lobbyEl) {
-        simulatorId = lobbyEl.getAttribute('data-simulator-id') || '';
-        simulatorTitle = lobbyEl.getAttribute('data-simulator-title') || '';
-        simulatorTimeMinutes = parseInt(lobbyEl.getAttribute('data-simulator-time') || '40');
-        const rawQuestionsBase64 = lobbyEl.getAttribute('data-questions') || '';
-        const decodedQuestions = rawQuestionsBase64 ? decodeURIComponent(escape(atob(rawQuestionsBase64))) : '[]';
-        allQuestions = JSON.parse(decodedQuestions);
+      if (window.activeSimulatorData) {
+        simulatorId = window.activeSimulatorData.id || '';
+        simulatorTitle = window.activeSimulatorData.title || '';
+        simulatorTimeMinutes = parseInt(window.activeSimulatorData.time || '40');
+        allQuestions = window.activeSimulatorData.questions || [];
+        console.log("Successfully loaded simulator questions directly from window global object:", allQuestions.length);
       }
 
       const stored = localStorage.getItem(SETTINGS_KEY);
