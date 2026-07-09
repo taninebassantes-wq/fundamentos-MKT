@@ -1025,11 +1025,11 @@ if (!simulator) {
     // Start quiz
     btnStartQuiz?.addEventListener('click', () => {
       // Capture any edits inside lobby credentials form
-      const nameVal = lobbyName?.value.trim() || '';
-      const groupVal = lobbyGroup?.value.trim() || '';
-      const emailVal = lobbyEmail?.value.trim() || '';
+      const nameVal = lobbyName ? lobbyName.value.trim() : '';
+      const groupVal = lobbyGroup ? lobbyGroup.value.trim() : '';
+      const emailVal = lobbyEmail ? lobbyEmail.value.trim() : '';
 
-      if (!nameVal || !groupVal || !emailVal) {
+      if (nameVal === '' || groupVal === '' || emailVal === '') {
         // @ts-ignore
         window.showToast?.('Por favor, ingresa todos tus datos académicos antes de continuar.', 'warning');
         return;
