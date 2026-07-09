@@ -31,7 +31,7 @@ if (!simulator) {
       data-simulator-id={simulator.id}
       data-simulator-title={simulator.title}
       data-simulator-time={simulator.timeLimitMinutes}
-      data-questions={JSON.stringify(questions)}
+      data-questions={Buffer.from(JSON.stringify(questions)).toString('base64')}
     >
       <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div>
@@ -334,7 +334,9 @@ if (!simulator) {
   const simulatorId = lobbyEl?.getAttribute('data-simulator-id') || '';
   const simulatorTitle = lobbyEl?.getAttribute('data-simulator-title') || '';
   const simulatorTimeMinutes = parseInt(lobbyEl?.getAttribute('data-simulator-time') || '40');
-  const allQuestions = JSON.parse(lobbyEl?.getAttribute('data-questions') || '[]');
+  const rawQuestionsBase64 = lobbyEl?.getAttribute('data-questions') || '';
+  const decodedQuestions = rawQuestionsBase64 ? decodeURIComponent(escape(atob(rawQuestionsBase64))) : '[]';
+  const allQuestions = JSON.parse(decodedQuestions);
   let isAnswerChecked = {}; // questionIndex -> boolean (only for practice mode)
   let currentIndex = 0;
   let timerInterval = null;
