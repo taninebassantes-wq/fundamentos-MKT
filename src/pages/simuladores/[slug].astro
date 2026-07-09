@@ -1029,6 +1029,8 @@ if (!simulator) {
       const groupVal = lobbyGroup ? lobbyGroup.value.trim() : '';
       const emailVal = lobbyEmail ? lobbyEmail.value.trim() : '';
 
+      console.log("Start quiz clicked. Checking credentials values:", { nameVal, groupVal, emailVal });
+
       if (nameVal === '' || groupVal === '' || emailVal === '') {
         // @ts-ignore
         window.showToast?.('Por favor, ingresa todos tus datos académicos antes de continuar.', 'warning');
@@ -1039,10 +1041,13 @@ if (!simulator) {
       settings.name = nameVal;
       settings.group = groupVal;
       settings.teacherEmail = emailVal;
+      console.log("Updated settings object saved to localStorage:", settings);
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 
       // Prep questions
+      console.log("Preparing questions for pool loading...");
       prepareQuestions();
+      console.log("Active questions selected for test:", activeQuestions);
 
       if (activeQuestions.length === 0) {
         // @ts-ignore
@@ -1061,6 +1066,7 @@ if (!simulator) {
       }
 
       // Transition layouts
+      console.log("Transitioning layout display block states. Lobby hidden, playground active.");
       if (quizLobby) quizLobby.classList.add('hidden');
       if (quizPlayground) quizPlayground.classList.remove('hidden');
 
