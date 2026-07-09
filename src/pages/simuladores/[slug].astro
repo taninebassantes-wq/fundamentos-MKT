@@ -29,14 +29,14 @@ if (!simulator) {
       id="quiz-lobby" 
       class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-md"
     >
-      <script is:inline define:vars={{ simulatorId: simulator.id, simulatorTitle: simulator.title, simulatorTime: simulator.timeLimitMinutes, questionsList: questions }}>
+      <script is:inline dangerouslySetInnerHTML={{ __html: `
         window.activeSimulatorData = {
-          id: simulatorId,
-          title: simulatorTitle,
-          time: simulatorTime,
-          questions: questionsList
+          id: "${simulator.id}",
+          title: "${simulator.title}",
+          time: ${simulator.timeLimitMinutes},
+          questions: ${JSON.stringify(questions)}
         };
-      </script>
+      ` }} />
       <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 rounded-full">
