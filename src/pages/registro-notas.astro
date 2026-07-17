@@ -666,6 +666,11 @@ import { simulators } from '../data/simulators';
     btnClearAll?.addEventListener('click', clearAllAttempts);
   }
 
+  // Run immediately for standard module loading
+  loadAttempts();
+  applyFilters();
+  initEvents();
+
   document.addEventListener('DOMContentLoaded', () => {
     loadAttempts();
     applyFilters();

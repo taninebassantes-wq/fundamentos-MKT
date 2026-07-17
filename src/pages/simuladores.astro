@@ -359,6 +359,10 @@ import { simulators } from '../data/simulators';
     });
   }
 
+  // Run immediately for standard module loading
+  loadSettingsAndStats();
+  initEvents();
+
   document.addEventListener('DOMContentLoaded', () => {
     loadSettingsAndStats();
     initEvents();
